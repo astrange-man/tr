@@ -2,302 +2,434 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>FYDEL | ORMANDA MAHSUR</title>
-    
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Orbitron:wght@400;500;700;900&family=Creepster&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Tactical FPS Arena - Mobile & PC</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; touch-action: none; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: system-ui, -apple-system, sans-serif; }
+
+        /* HUD Göstergeleri */
+        #hud-top {
+            position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 10;
+            display: flex; gap: 15px; background: rgba(15, 23, 42, 0.85); padding: 8px 20px;
+            border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; font-weight: 800; font-size: 14px;
+        }
+        .score-box { display: flex; align-items: center; gap: 6px; }
+        .score-val { color: #2ecc71; font-size: 16px; }
+
+        #hud-bottom {
+            position: absolute; bottom: 15px; left: 15px; z-index: 10;
+            display: flex; flex-direction: column; gap: 6px; pointer-events: none;
+        }
+        .hp-bar {
+            width: 160px; height: 16px; background: rgba(0,0,0,0.6);
+            border: 1.5px solid rgba(255,255,255,0.3); border-radius: 8px; overflow: hidden; position: relative;
+        }
+        #hp-fill { height: 100%; width: 100%; background: #e74c3c; transition: width 0.1s; }
+        .hp-text { position: absolute; inset: 0; font-size: 10px; font-weight: 900; color: #fff; display: flex; align-items: center; justify-content: center; }
+
+        #ammo-ui { color: #f1c40f; font-size: 18px; font-weight: 900; text-shadow: 1px 1px 3px #000; }
+
+        /* Tactical Crosshair */
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 14px; height: 14px; pointer-events: none; z-index: 15;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #crosshair::before, #crosshair::after { content: ''; position: absolute; background: #00ffcc; }
+        #crosshair::before { width: 2px; height: 12px; }
+        #crosshair::after { width: 12px; height: 2px; }
+        #crosshair-dot { width: 3px; height: 3px; background: #00ffcc; border-radius: 50%; }
+
+        /* Mobil Kontrol Alanları */
+        #touch-container { position: absolute; inset: 0; z-index: 20; }
+        #move-zone { position: absolute; top: 0; left: 0; width: 50vw; height: 100vh; }
+        #look-zone { position: absolute; top: 0; right: 0; width: 50vw; height: 100vh; }
+        
+        #joy-base {
+            position: absolute; width: 100px; height: 100px; background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(0, 255, 204, 0.4); border-radius: 50%; display: none; pointer-events: none;
+        }
+        #joy-knob {
+            position: absolute; top: 25px; left: 25px; width: 50px; height: 50px;
+            background: rgba(0, 255, 204, 0.6); border-radius: 50%; pointer-events: none;
         }
 
-        body {
-            background: #071a10;
-            font-family: 'Inter', sans-serif;
-            color: #e0e0e0;
-            overflow-x: hidden;
+        /* Aksiyon Butonları */
+        #btn-group { position: absolute; bottom: 20px; right: 20px; display: grid; grid-template-columns: repeat(3, 62px); gap: 10px; z-index: 30; }
+        .btn {
+            width: 62px; height: 62px; border-radius: 31px; background: rgba(15, 23, 42, 0.75);
+            border: 2px solid rgba(255,255,255,0.25); color: white; font-size: 11px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
         }
+        .btn:active { transform: scale(0.92); background: rgba(0, 255, 204, 0.3); }
+        .btn-fire { background: rgba(231, 76, 60, 0.85); border-color: #ff7675; grid-row: span 2; height: 134px; border-radius: 35px; font-size: 14px; }
+        .btn-aim { background: rgba(52, 152, 219, 0.85); border-color: #74b9ff; }
 
-        /* Navbar */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 20px 5%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-            background: rgba(7, 26, 16, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(70, 130, 70, 0.3);
-        }
-
-        .logo {
-            font-family: 'Orbitron', monospace;
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: -1px;
-        }
-
-        .logo span {
-            color: #2ecc2e;
-            text-shadow: 0 0 8px #2ecc2e;
-        }
-
-        /* İndirme butonu (koyu yeşil) */
-        .btn-download {
-            background: #0f4c2a;
-            border: 1px solid #2ecc2e;
-            padding: 12px 28px;
-            border-radius: 60px;
-            color: white;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-        }
-
-        .btn-download:hover {
-            background: #2ecc2e;
-            color: #071a10;
-            box-shadow: 0 0 18px rgba(46, 204, 46, 0.5);
-            transform: scale(1.02);
-        }
-
-        /* Hero Section (Ana görsel) */
-        .hero {
-            width: 100%;
-            height: 100vh;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .hero img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 0;
-            filter: brightness(0.55) contrast(1.1);
-        }
-
-        .hero-overlay {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle, rgba(7,26,16,0.4) 0%, #071a10 90%);
-            z-index: 1;
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            max-width: 800px;
-            padding: 20px;
-            animation: fadeUp 1.2s ease-out;
-        }
-
-        .hero-content h1 {
-            font-family: 'Creepster', cursive;
-            font-size: 5.5rem;
-            letter-spacing: 6px;
-            color: #e0e0e0;
-            text-shadow: 0 0 20px #2ecc2e, 0 0 40px #0a3b1f;
-            margin-bottom: 20px;
-        }
-
-        .hero-content p {
-            font-size: 1.2rem;
-            color: #ccc;
-            margin-bottom: 32px;
-            line-height: 1.6;
-        }
-
-        .btn-about {
-            background: transparent;
-            border: 2px solid #2ecc2e;
-            padding: 14px 36px;
-            border-radius: 50px;
-            font-weight: 800;
-            font-size: 1rem;
-            color: #2ecc2e;
-            cursor: pointer;
-            transition: 0.3s;
-            backdrop-filter: blur(4px);
-        }
-
-        .btn-about:hover {
-            background: #2ecc2e;
-            color: #071a10;
-            box-shadow: 0 0 28px #2ecc2e;
-        }
-
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Modal (Oyun Hakkında) */
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(12px);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: 0.3s;
-        }
-
-        .modal.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .modal-card {
-            background: #0f1f17;
-            border: 1px solid #2ecc2e;
-            border-radius: 36px;
-            max-width: 550px;
-            width: 90%;
-            padding: 40px;
-            position: relative;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
-            animation: zoomIn 0.4s ease;
-        }
-
-        @keyframes zoomIn {
-            from {
-                transform: scale(0.9);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        .modal-card h2 {
-            font-family: 'Orbitron';
-            font-size: 2rem;
-            margin-bottom: 16px;
-            color: #2ecc2e;
-        }
-
-        .modal-card p {
-            margin: 16px 0;
-            line-height: 1.6;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 24px;
-            right: 28px;
-            font-size: 28px;
-            cursor: pointer;
-            color: #aaa;
-            transition: 0.2s;
-        }
-
-        .close-modal:hover {
-            color: #2ecc2e;
-        }
-
-        /* Footer */
-        footer {
-            background: #05150e;
-            padding: 40px 5%;
-            text-align: center;
-            border-top: 1px solid #1a3a28;
-            font-size: 0.8rem;
-            color: #6a8e7a;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero-content h1 {
-                font-size: 2.8rem;
-            }
-            .btn-download {
-                padding: 8px 18px;
-                font-size: 0.7rem;
-            }
-        }
+        #game-over { display: none; position: absolute; inset: 0; background: rgba(10, 10, 15, 0.95); color: #e74c3c; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
     </style>
 </head>
 <body>
 
-<nav class="navbar">
-    <div class="logo">FYDEL<span>.</span></div>
-    <a href="https://github.com/bliesports/bliesports.github.io/releases/download/v1.0.0/BLI.CLIENT_0.1.0_x64_en-US.msi" class="btn-download">
-        <i class="fa-solid fa-download"></i> OYUNU İNDİR
-    </a>
-</nav>
+    <div id="crosshair"><div id="crosshair-dot"></div></div>
 
-<section class="hero">
-    <img src="file_000000009228720aa4b9884c08348563.png" alt="Fydel Orman">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-        <h1>FYDEL</h1>
-        <p>Ormanda mahsur kaldın. Sadece nefesini duyuyorsun. <br>Fydel'lar her yerde. KAÇ.</p>
-        <button class="btn-about" onclick="openModal()">⟳ OYUN HAKKINDA</button>
+    <div id="hud-top">
+        <div class="score-box">LEŞ: <span id="kills" class="score-val">0</span></div>
+        <div style="color:rgba(255,255,255,0.3);">|</div>
+        <div class="score-box">SKOR: <span id="score" class="score-val" style="color:#f1c40f;">0</span></div>
     </div>
-</section>
 
-<footer>
-    <p>© 2026 BLI STUDIO — Tüm hakları saklıdır. Korku gerilim deneyimi.</p>
-</footer>
-
-<!-- Modal -->
-<div class="modal" id="gameModal">
-    <div class="modal-card">
-        <span class="close-modal" onclick="closeModal()">&times;</span>
-        <h2>⟳ ORMANIN KALBİ</h2>
-        <p><strong>BLI STUDIO</strong> tarafından geliştirilen <strong>FYDEL</strong>, psikolojik bir hayatta kalma korku oyunudur.</p>
-        <p>📌 <strong>Hikaye:</strong> Gizemli bir ormanda uyanıyorsun. Hiçbir şey hatırlamıyorsun. Fakat ormanın derinliklerinde "Fydel" adı verilen yaratıklar var. Görmek için değil, duymak için avlanıyorlar. Sessiz ol. Koş. Saklan.</p>
-        <p>🎮 <strong>Özellikler:</strong> Gerçekçi ses motoru, dinamik AI sistemi, çoklu sonlar, atmosferik grafikler.</p>
-        <p style="margin-top: 20px; color:#2ecc2e;">⚡ "Fydel'lar duyar. Nefesini kes."</p>
+    <div id="hud-bottom">
+        <div id="ammo-ui">🔫 <span id="ammo-cur">30</span> / <span id="ammo-reserve">90</span></div>
+        <div class="hp-bar">
+            <div id="hp-fill"></div>
+            <div class="hp-text">HP: <span id="hp">100</span></div>
+        </div>
     </div>
-</div>
+
+    <div id="touch-container">
+        <div id="move-zone"></div>
+        <div id="look-zone"></div>
+        <div id="joy-base"><div id="joy-knob"></div></div>
+    </div>
+
+    <div id="btn-group">
+        <div class="btn btn-aim" onclick="toggleAim()">🎯 ADS</div>
+        <div class="btn" onclick="reloadGun()">🔄 R</div>
+        <div class="btn btn-fire" onclick="shootGun()">🔥 ATEŞ</div>
+        <div class="btn" onclick="jumpPlayer()">🦘 ZIPLA</div>
+        <div class="btn" onclick="crouchPlayer()">🧎 ÇÖK</div>
+    </div>
+
+    <div id="game-over">
+        <h1 style="font-size: 36px; letter-spacing: 2px;">ELENDİN!</h1>
+        <button onclick="location.reload()" style="padding: 14px 28px; margin-top: 20px; border-radius: 8px; border: none; background: #e74c3c; color: #fff; font-weight: bold; font-size: 16px; cursor: pointer;">YENİDEN DOĞ</button>
+    </div>
 
 <script>
-    function openModal() {
-        const modal = document.getElementById('gameModal');
-        modal.classList.add('active');
-    }
-    function closeModal() {
-        const modal = document.getElementById('gameModal');
-        modal.classList.remove('active');
-    }
-    window.onclick = function(e) {
-        const modal = document.getElementById('gameModal');
-        if(e.target === modal) closeModal();
-    }
-</script>
+// --- THREE.JS SAHNE KURULUMU ---
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1c23);
+scene.fog = new THREE.FogExp2(0x1a1c23, 0.008);
 
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+
+// Işıklandırma (Harita Atmosferi)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xfff5e6, 0.9);
+sunLight.position.set(80, 120, 50);
+scene.add(sunLight);
+
+// --- ARENA / HARİTA TASARIMI ---
+// Beton Zemin
+const floorMat = new THREE.MeshStandardMaterial({ color: 0x34495e, roughness: 0.8 });
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), floorMat);
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+
+// Taktiksel Duvarlar ve Siper Kutuları
+const boxMat = new THREE.MeshStandardMaterial({ color: 0x7f8c8d, roughness: 0.5 });
+const siteAMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, roughness: 0.5 });
+const siteBMat = new THREE.MeshStandardMaterial({ color: 0x3498db, roughness: 0.5 });
+
+function createObstacle(x, y, z, w, h, d, mat = boxMat) {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    mesh.position.set(x, y, z);
+    scene.add(mesh);
+    return mesh;
+}
+
+// A Site & B Site Yapıları
+createObstacle(-30, 2.5, -40, 10, 5, 10, siteAMat); // A Site
+createObstacle(30, 2.5, -40, 10, 5, 10, siteBMat);  // B Site
+
+// Siper Kutuları ve Duvarlar
+for(let i=0; i<35; i++) {
+    let rx = (Math.random() - 0.5) * 200;
+    let rz = (Math.random() - 0.5) * 200;
+    if(Math.hypot(rx, rz) > 15) {
+        let size = 2 + Math.random() * 3;
+        createObstacle(rx, size/2, rz, size, size, size);
+    }
+}
+
+// --- KARAKTER VE SİLAH HİYERARŞİSİ ---
+const playerGroup = new THREE.Group();
+playerGroup.position.set(0, 1.7, 40);
+scene.add(playerGroup);
+playerGroup.add(camera);
+
+// Vandal / AK-47 Taktiksel Silah
+const gunGroup = new THREE.Group();
+
+const body = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.45), new THREE.MeshStandardMaterial({color: 0x1e272e}));
+const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.55), new THREE.MeshStandardMaterial({color: 0x0f172a}));
+barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.02, -0.45);
+
+const mag = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.22, 0.07), new THREE.MeshStandardMaterial({color: 0xd2dae2}));
+mag.position.set(0, -0.12, -0.08); mag.rotation.x = 0.25;
+
+const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.12), new THREE.MeshStandardMaterial({color: 0x00ffcc}));
+scope.rotation.x = Math.PI / 2; scope.position.set(0, 0.07, -0.1);
+
+gunGroup.add(body, barrel, mag, scope);
+gunGroup.position.set(0.22, -0.22, -0.42);
+camera.add(gunGroup);
+
+// Muzzle Flash
+const flashMat = new THREE.MeshBasicMaterial({color: 0xffdd59, transparent: true, opacity: 0});
+const muzzleFlash = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), flashMat);
+muzzleFlash.position.set(0, 0.02, -0.75);
+gunGroup.add(muzzleFlash);
+
+// OYUN DURUMU (STATE)
+let pState = { hp: 100, kills: 0, score: 0, ammo: 30, reserve: 90 };
+let velocityY = 0, isGrounded = true, isCrouching = false, isAiming = false;
+let enemies = [];
+
+// BOT DÜŞMAN OLUŞTURMA
+function spawnEnemy() {
+    const enemyGroup = new THREE.Group();
+    const bodyMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.8, 0.8), new THREE.MeshStandardMaterial({color: 0xe74c3c}));
+    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), new THREE.MeshStandardMaterial({color: 0xc0392b}));
+    headMesh.position.y = 1.1;
+    enemyGroup.add(bodyMesh, headMesh);
+
+    let angle = Math.random() * Math.PI * 2;
+    let dist = 30 + Math.random() * 40;
+    enemyGroup.position.set(playerGroup.position.x + Math.cos(angle)*dist, 0.9, playerGroup.position.z + Math.sin(angle)*dist);
+
+    scene.add(enemyGroup);
+    enemies.push({ group: enemyGroup, hp: 100, lastShoot: 0 });
+}
+
+for(let i=0; i<5; i++) spawnEnemy();
+
+// --- MOBİL DOKUNMATİK KONTROLLER ---
+let moveInput = { x: 0, y: 0 };
+let yaw = 0, pitch = 0;
+
+const moveZone = document.getElementById('move-zone');
+const lookZone = document.getElementById('look-zone');
+const joyBase = document.getElementById('joy-base');
+const joyKnob = document.getElementById('joy-knob');
+
+let moveTouchId = null, lookTouchId = null;
+let joyCenter = { x: 0, y: 0 }, lastLookPos = { x: 0, y: 0 };
+
+moveZone.addEventListener('touchstart', e => {
+    e.preventDefault();
+    for (let t of e.changedTouches) {
+        if (moveTouchId === null) {
+            moveTouchId = t.identifier;
+            joyCenter = { x: t.clientX, y: t.clientY };
+            joyBase.style.left = (t.clientX - 50) + 'px';
+            joyBase.style.top = (t.clientY - 50) + 'px';
+            joyBase.style.display = 'block';
+            joyKnob.style.transform = 'translate(0px, 0px)';
+        }
+    }
+}, {passive: false});
+
+lookZone.addEventListener('touchstart', e => {
+    e.preventDefault();
+    for (let t of e.changedTouches) {
+        if (lookTouchId === null) {
+            lookTouchId = t.identifier;
+            lastLookPos = { x: t.clientX, y: t.clientY };
+        }
+    }
+}, {passive: false});
+
+window.addEventListener('touchmove', e => {
+    for (let t of e.touches) {
+        if (t.identifier === moveTouchId) {
+            let dx = t.clientX - joyCenter.x, dy = t.clientY - joyCenter.y;
+            let dist = Math.hypot(dx, dy), maxDist = 40;
+            if (dist > maxDist) { dx = (dx / dist) * maxDist; dy = (dy / dist) * maxDist; }
+            joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+            moveInput.x = dx / maxDist; moveInput.y = dy / maxDist;
+        }
+        if (t.identifier === lookTouchId) {
+            let dx = t.clientX - lastLookPos.x, dy = t.clientY - lastLookPos.y;
+            let sens = isAiming ? 0.0025 : 0.0045; // ADS sırasında daha düşük hassasiyet
+            yaw -= dx * sens; pitch -= dy * sens;
+            pitch = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, pitch));
+            lastLookPos = { x: t.clientX, y: t.clientY };
+        }
+    }
+}, {passive: false});
+
+const resetTouch = (id) => {
+    if (id === moveTouchId) { moveTouchId = null; moveInput = { x: 0, y: 0 }; joyBase.style.display = 'none'; }
+    if (id === lookTouchId) lookTouchId = null;
+};
+window.addEventListener('touchend', e => { for (let t of e.changedTouches) resetTouch(t.identifier); });
+
+// --- SİLAH VE ÇATIŞMA MEKANİKLERİ ---
+function shootGun() {
+    if (pState.ammo <= 0) { reloadGun(); return; }
+
+    pState.ammo--;
+    updateHUD();
+
+    // Recoil (Geri Tepme) Animasyonu
+    gunGroup.position.z = isAiming ? -0.22 : -0.32;
+    gunGroup.rotation.x = 0.15;
+    muzzleFlash.material.opacity = 1;
+
+    setTimeout(() => {
+        gunGroup.position.z = isAiming ? -0.25 : -0.42;
+        gunGroup.rotation.x = 0;
+        muzzleFlash.material.opacity = 0;
+    }, 50);
+
+    // Mermi İzleme Çizgisi (Bullet Tracer)
+    const tracerMat = new THREE.LineBasicMaterial({ color: 0xffeaa7 });
+    const tracerGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0.2, -0.2, -0.5).applyMatrix4(camera.matrixWorld),
+        new THREE.Vector3(0, 0, -50).applyMatrix4(camera.matrixWorld)
+    ]);
+    const tracer = new THREE.Line(tracerGeo, tracerMat);
+    scene.add(tracer);
+    setTimeout(() => scene.remove(tracer), 30);
+
+    // Raycast / Hitbox Hesabı
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+
+    enemies.forEach((enemy, index) => {
+        const intersects = raycaster.intersectObjects(enemy.group.children);
+        if(intersects.length > 0) {
+            enemy.hp -= 40; // Mermi hasarı
+            if(enemy.hp <= 0) {
+                scene.remove(enemy.group);
+                enemies.splice(index, 1);
+                pState.kills++;
+                pState.score += 100;
+                updateHUD();
+                setTimeout(spawnEnemy, 2000); // Yeniden bot spawn
+            }
+        }
+    });
+}
+
+function toggleAim() {
+    isAiming = !isAiming;
+    if (isAiming) {
+        camera.fov = 45; // Dürbün Zoom
+        gunGroup.position.set(0, -0.14, -0.25); // Silahı göz hizasına getir
+    } else {
+        camera.fov = 75;
+        gunGroup.position.set(0.22, -0.22, -0.42);
+    }
+    camera.updateProjectionMatrix();
+}
+
+function reloadGun() {
+    if (pState.ammo < 30 && pState.reserve > 0) {
+        let needed = 30 - pState.ammo;
+        let reloadAmount = Math.min(needed, pState.reserve);
+        pState.reserve -= reloadAmount;
+        pState.ammo += reloadAmount;
+        
+        // Reload Animasyonu
+        gunGroup.rotation.z = -0.5;
+        setTimeout(() => gunGroup.rotation.z = 0, 400);
+        updateHUD();
+    }
+}
+
+function jumpPlayer() {
+    if (isGrounded) { velocityY = 6.0; isGrounded = false; }
+}
+
+function crouchPlayer() {
+    isCrouching = !isCrouching;
+    let targetY = isCrouching ? 1.0 : 1.7;
+    playerGroup.position.y = targetY;
+}
+
+function updateHUD() {
+    document.getElementById('kills').innerText = pState.kills;
+    document.getElementById('score').innerText = pState.score;
+    document.getElementById('ammo-cur').innerText = pState.ammo;
+    document.getElementById('ammo-reserve').innerText = pState.reserve;
+    document.getElementById('hp').innerText = Math.max(0, Math.round(pState.hp));
+    document.getElementById('hp-fill').style.width = Math.max(0, pState.hp) + '%';
+}
+
+// --- DÖNGÜ (GAME LOOP) ---
+const clock = new THREE.Clock();
+
+function animate() {
+    requestAnimationFrame(animate);
+    let dt = clock.getDelta();
+
+    if(pState.hp <= 0) return;
+
+    // Kamera Dönüşleri
+    playerGroup.rotation.y = yaw;
+    camera.rotation.x = pitch;
+
+    // Zıplama Fizik
+    if (!isGrounded) {
+        playerGroup.position.y += velocityY * dt;
+        velocityY -= 18 * dt;
+        let groundY = isCrouching ? 1.0 : 1.7;
+        if (playerGroup.position.y <= groundY) {
+            playerGroup.position.y = groundY;
+            velocityY = 0;
+            isGrounded = true;
+        }
+    }
+
+    // Hareket
+    if (moveInput.x !== 0 || moveInput.y !== 0) {
+        let speed = isCrouching ? 3.0 : 7.0;
+        let forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+        let side = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+        let moveDir = forward.multiplyScalar(-moveInput.y).add(side.multiplyScalar(moveInput.x));
+        playerGroup.position.add(moveDir.multiplyScalar(speed * dt));
+    }
+
+    // Düşman Yapay Zekası (Ateş Etme & Yaklaşma)
+    enemies.forEach((enemy) => {
+        enemy.group.lookAt(playerGroup.position.x, enemy.group.position.y, playerGroup.position.z);
+        let dist = enemy.group.position.distanceTo(playerGroup.position);
+        
+        if (dist > 12) {
+            enemy.group.translateZ(3.0 * dt);
+        } else {
+            // Ateş Etme Mantığı
+            let now = clock.getElapsedTime();
+            if (now - enemy.lastShoot > 1.2) {
+                enemy.lastShoot = now;
+                pState.hp -= 12; // Bot sana ateş ediyor
+                updateHUD();
+                if (pState.hp <= 0) document.getElementById('game-over').style.display = 'flex';
+            }
+        }
+    });
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
 </body>
-  </html>
+</html>
