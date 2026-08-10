@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Tactical FPS Pro - CrossPlatform Edition</title>
+    <title>Tactical FPS Pro - Weapon Slots Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; touch-action: none; }
         body, html { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: system-ui, -apple-system, sans-serif; }
 
-        /* Fullscreen Start Overlay */
+        /* Start Overlay */
         #start-screen {
             position: absolute; inset: 0; background: #0b0e14; z-index: 200;
             display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff;
@@ -30,10 +30,10 @@
 
         /* Pause Button */
         #btn-pause-ui {
-            position: absolute; top: 12px; right: 12px; z-index: 10;
+            position: absolute; top: 12px; right: 12px; z-index: 50;
             width: 44px; height: 44px; border-radius: 50%; background: rgba(15, 23, 42, 0.85);
             border: 1.5px solid rgba(255, 255, 255, 0.3); display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
+            cursor: pointer; pointer-events: auto;
         }
 
         /* Bottom HUD */
@@ -48,6 +48,24 @@
         #hp-fill { height: 100%; width: 100%; background: #ff4757; transition: width 0.1s; }
         .hp-text { position: absolute; inset: 0; font-size: 10px; font-weight: 900; color: #fff; display: flex; align-items: center; justify-content: center; }
         #ammo-ui { color: #eccc68; font-size: 18px; font-weight: 900; text-shadow: 1px 1px 4px #000; }
+
+        /* WEAPON SLOTS HUD (Alt Orta Silah Kutuları) */
+        #weapon-slots {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 30;
+            display: flex; gap: 10px; background: rgba(15, 23, 42, 0.7); padding: 6px; border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(5px);
+        }
+        .slot-box {
+            width: 55px; height: 55px; border-radius: 8px; background: rgba(255, 255, 255, 0.05);
+            border: 1.5px solid rgba(255, 255, 255, 0.2); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; cursor: pointer; color: #aaa; transition: 0.2s;
+        }
+        .slot-box.active {
+            border-color: #00ffcc; background: rgba(0, 255, 204, 0.2); color: #fff;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.4); transform: scale(1.05);
+        }
+        .slot-box svg { width: 24px; height: 24px; fill: currentColor; }
+        .slot-box span { font-size: 9px; font-weight: bold; margin-top: 2px; }
 
         /* Crosshair */
         #crosshair {
@@ -74,15 +92,15 @@
             background: rgba(0, 255, 204, 0.7); border-radius: 50%; pointer-events: none; box-shadow: 0 0 10px #00ffcc;
         }
 
-        #btn-group { position: absolute; bottom: 20px; right: 20px; display: grid; grid-template-columns: repeat(3, 60px); gap: 10px; z-index: 30; }
+        #btn-group { position: absolute; bottom: 20px; right: 20px; display: grid; grid-template-columns: repeat(3, 58px); gap: 10px; z-index: 30; }
         .btn-svg {
-            width: 60px; height: 60px; border-radius: 50%; background: rgba(15, 23, 42, 0.85);
+            width: 58px; height: 58px; border-radius: 50%; background: rgba(15, 23, 42, 0.85);
             border: 2px solid rgba(255,255,255,0.3); color: white;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 6px 15px rgba(0,0,0,0.5); backdrop-filter: blur(4px);
         }
-        .btn-svg svg { width: 26px; height: 26px; fill: currentColor; }
-        .btn-fire { background: linear-gradient(135deg, #ff4757, #ff6b81); border-color: #ff7675; grid-row: span 2; height: 130px; border-radius: 30px; }
+        .btn-svg svg { width: 24px; height: 24px; fill: currentColor; }
+        .btn-fire { background: linear-gradient(135deg, #ff4757, #ff6b81); border-color: #ff7675; grid-row: span 2; height: 126px; border-radius: 30px; }
 
         /* Settings Modal */
         #settings-menu {
@@ -100,7 +118,6 @@
 </head>
 <body>
 
-    <!-- Başlangıç Ekranı (Tam Ekran Modu İçin) -->
     <div id="start-screen">
         <h1 style="letter-spacing: 2px;">TACTICAL FPS</h1>
         <p style="color: rgba(255,255,255,0.6); margin-top: 8px;" id="device-info">Cihaz Algılanıyor...</p>
@@ -115,7 +132,8 @@
         <div>SKOR: <span id="score" class="score-val" style="color:#eccc68;">0</span></div>
     </div>
 
-    <div id="btn-pause-ui" onclick="togglePause()">
+    <!-- Tıklanabilir Duraklatma Düğmesi -->
+    <div id="btn-pause-ui">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
     </div>
 
@@ -127,7 +145,23 @@
         </div>
     </div>
 
-    <!-- Mobil Dokunmatik Alanlar ve SVG İkonlu Butonlar -->
+    <!-- 3'LÜ SİLAH SLOTLARI -->
+    <div id="weapon-slots">
+        <div class="slot-box active" id="slot-1" onclick="switchWeapon(1)">
+            <svg viewBox="0 0 24 24"><path d="M21 7l-5-2-4 2-4-2-5 2v10l5-2 4 2 4-2 5 2V7z"/></svg>
+            <span>1. TÜFEK</span>
+        </div>
+        <div class="slot-box" id="slot-2" onclick="switchWeapon(2)">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+            <span>2. TABANCA</span>
+        </div>
+        <div class="slot-box" id="slot-3" onclick="switchWeapon(3)">
+            <svg viewBox="0 0 24 24"><path d="M14.12 10.47L12 12.59l-2.12-2.12-2.12 2.12L9.88 14.71 12 12.59l2.12 2.12 2.12-2.12zM19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+            <span>3. BIÇAK</span>
+        </div>
+    </div>
+
+    <!-- Mobil Dokunmatik Alanlar ve SVG İkonlar -->
     <div id="mobile-controls">
         <div id="touch-container">
             <div id="move-zone"></div>
@@ -154,7 +188,7 @@
         </div>
     </div>
 
-    <!-- Duraklatma & Ayarlar Menüsü -->
+    <!-- Duraklatma / Ayarlar Menüsü -->
     <div id="settings-menu">
         <h2 style="color:#00ffcc; margin-bottom:20px;">OYUN AYARLARI</h2>
         
@@ -176,7 +210,7 @@
             <input type="checkbox" id="gyro-toggle" onchange="toggleGyro()">
         </div>
 
-        <button class="start-btn" style="margin-top:20px;" onclick="togglePause()">DEVAM ET</button>
+        <button class="start-btn" style="margin-top:20px;" onclick="resumeGame()">DEVAM ET</button>
     </div>
 
     <div id="game-over">
@@ -185,7 +219,6 @@
     </div>
 
 <script>
-// --- CİHAZ VE AYAR DEĞİŞKENLERİ ---
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 document.getElementById('device-info').innerText = isMobile ? "Mobil Cihaz Algılandı (Dokunmatik)" : "PC Algılandı (Klavye & Fare)";
 
@@ -196,7 +229,7 @@ if (isMobile) {
 let settings = { graphics: 'high', sens: 0.004, gyro: false };
 let isPaused = false, isGameStarted = false;
 
-// --- THREE.JS KURULUMU ---
+// THREE.JS SAHNE VE AYARLAR
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 scene.fog = new THREE.FogExp2(0x87ceeb, 0.005);
@@ -237,18 +270,40 @@ for(let i=0; i<35; i++) {
     if(Math.hypot(rx, rz) > 15) createObstacle(rx, 1.5, rz, 3, 3, 3);
 }
 
-// Oyuncu & Silah
+// Oyuncu Grubu
 const playerGroup = new THREE.Group();
 playerGroup.position.set(0, 1.7, 40);
 scene.add(playerGroup); playerGroup.add(camera);
 
+// 3 ADET SİLAH MODELİNİN OLUŞTURULMASI
 const gunGroup = new THREE.Group();
-const body = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.45), new THREE.MeshStandardMaterial({color: 0x2f3542}));
-const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.55), new THREE.MeshStandardMaterial({color: 0x57606f}));
-barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.02, -0.45);
-gunGroup.add(body, barrel);
 gunGroup.position.set(0.22, -0.22, -0.42);
 camera.add(gunGroup);
+
+// Slot 1: Tüfek (Vandal)
+const rifleMesh = new THREE.Group();
+const rBody = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.45), new THREE.MeshStandardMaterial({color: 0x2f3542}));
+const rBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.55), new THREE.MeshStandardMaterial({color: 0x57606f}));
+rBarrel.rotation.x = Math.PI / 2; rBarrel.position.set(0, 0.02, -0.45);
+rifleMesh.add(rBody, rBarrel);
+
+// Slot 2: Tabanca (Pistol)
+const pistolMesh = new THREE.Group();
+const pBody = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.22), new THREE.MeshStandardMaterial({color: 0x1e272e}));
+const pBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.25), new THREE.MeshStandardMaterial({color: 0x718093}));
+pBarrel.rotation.x = Math.PI / 2; pBarrel.position.set(0, 0.02, -0.2);
+pistolMesh.add(pBody, pBarrel);
+pistolMesh.visible = false;
+
+// Slot 3: Taktik Bıçak (Knife)
+const knifeMesh = new THREE.Group();
+const kHandle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 0.15), new THREE.MeshStandardMaterial({color: 0xdcdde1}));
+const kBlade = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.05, 0.25), new THREE.MeshStandardMaterial({color: 0x00ffcc, roughness: 0.1}));
+kBlade.position.set(0, 0.02, -0.18);
+knifeMesh.add(kHandle, kBlade);
+knifeMesh.visible = false;
+
+gunGroup.add(rifleMesh, pistolMesh, knifeMesh);
 
 const muzzleFlash = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), new THREE.MeshBasicMaterial({color: 0xffa502, transparent: true, opacity: 0}));
 muzzleFlash.position.set(0, 0.02, -0.75);
@@ -264,7 +319,6 @@ function spawnEnemy() {
     const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), new THREE.MeshStandardMaterial({color: 0xff6b81}));
     headMesh.position.y = 1.7; headMesh.userData = { type: 'head' };
 
-    // Düşman Silahı
     const eGun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.4), new THREE.MeshStandardMaterial({color: 0x111111}));
     eGun.position.set(0.35, 0.8, -0.3);
 
@@ -278,29 +332,74 @@ function spawnEnemy() {
 }
 for(let i=0; i<5; i++) spawnEnemy();
 
-// OYUNU BAŞLATMA VE TAM EKRAN (Google Çubuğunu Gizlemek İçin)
+// SİLAH DEĞİŞTİRME MEKANİĞİ
+let currentSlot = 1; // 1: Rifle, 2: Pistol, 3: Knife
+let weaponAmmo = { 1: { cur: 30, res: 90 }, 2: { cur: 12, res: 48 }, 3: { cur: '∞', res: '∞' } };
+
+function switchWeapon(slot) {
+    if(currentSlot === slot || isPaused) return;
+
+    // Animasyon: Silahı aşağı indir ve yenisini getir
+    gunGroup.position.y = -0.5;
+
+    setTimeout(() => {
+        currentSlot = slot;
+        rifleMesh.visible = (slot === 1);
+        pistolMesh.visible = (slot === 2);
+        knifeMesh.visible = (slot === 3);
+
+        document.querySelectorAll('.slot-box').forEach(el => el.classList.remove('active'));
+        document.getElementById(`slot-${slot}`).classList.add('active');
+
+        updateHUD();
+        gunGroup.position.y = -0.22;
+    }, 150);
+}
+
+// OYUNU BAŞLATMA
 function startGame() {
     document.getElementById('start-screen').style.display = 'none';
     isGameStarted = true;
 
-    // Fullscreen API (Adres çubuğunu gizler)
     if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen();
-    } else if (document.documentElement.webkitRequestFullscreen) {
-        document.documentElement.webkitRequestFullscreen();
     }
-
     if (!isMobile) {
         document.body.requestPointerLock();
     }
 }
 
-// PC KONTROLLERİ (WASD & MOUSE)
+// DURAKLATMA / PAUSE KONTROLÜ
+document.getElementById('btn-pause-ui').addEventListener('click', (e) => {
+    e.stopPropagation();
+    pauseGame();
+});
+
+function pauseGame() {
+    isPaused = true;
+    document.getElementById('settings-menu').style.display = 'flex';
+    if (document.exitPointerLock) document.exitPointerLock();
+}
+
+function resumeGame() {
+    isPaused = false;
+    document.getElementById('settings-menu').style.display = 'none';
+    if (!isMobile && isGameStarted) document.body.requestPointerLock();
+}
+
+// PC KONTROLLERİ
 let keys = {};
 window.addEventListener('keydown', e => {
+    if(!isGameStarted) return;
     keys[e.code] = true;
+    
     if (e.code === 'KeyR') reloadGun();
-    if (e.code === 'KeyP' || e.code === 'Escape') togglePause();
+    if (e.code === 'KeyP' || e.code === 'Escape') {
+        if(isPaused) resumeGame(); else pauseGame();
+    }
+    if (e.code === 'Digit1') switchWeapon(1);
+    if (e.code === 'Digit2') switchWeapon(2);
+    if (e.code === 'Digit3') switchWeapon(3);
     if (e.code === 'Space') jumpPlayer();
 });
 window.addEventListener('keyup', e => keys[e.code] = false);
@@ -386,28 +485,16 @@ if (isMobile) {
     document.getElementById('btn-crouch').addEventListener('touchstart', e => { e.preventDefault(); crouchPlayer(); });
 }
 
-// JİROSKOP (GYROSCOPE) DESTEĞİ
 function toggleGyro() {
     settings.gyro = document.getElementById('gyro-toggle').checked;
-    if (settings.gyro && window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', handleGyro);
-    } else {
-        window.removeEventListener('deviceorientation', handleGyro);
-    }
+    if (settings.gyro && window.DeviceOrientationEvent) window.addEventListener('deviceorientation', handleGyro);
+    else window.removeEventListener('deviceorientation', handleGyro);
 }
 
 function handleGyro(e) {
     if (!isPaused && settings.gyro) {
-        let gyroX = e.gamma * 0.001; // Sol-Sağ
-        let gyroY = e.beta * 0.001;  // Yukarı-Aşağı
-        yaw -= gyroX; pitch -= gyroY;
+        yaw -= e.gamma * 0.001; pitch -= e.beta * 0.001;
     }
-}
-
-// OYUN DURAKLATMA VE AYARLAR
-function togglePause() {
-    isPaused = !isPaused;
-    document.getElementById('settings-menu').style.display = isPaused ? 'flex' : 'none';
 }
 
 function applySettings() {
@@ -416,17 +503,22 @@ function applySettings() {
     settings.sens = document.getElementById('sens-slider').value * 0.001;
 }
 
-// OYUN MEKANİKLERİ
-let pState = { hp: 100, kills: 0, score: 0, ammo: 30, reserve: 90 };
+// OYUN MEKANİKLERİ VE ATEŞ ETME
+let pState = { hp: 100, kills: 0, score: 0 };
 let velocityY = 0, isGrounded = true, isCrouching = false, isAiming = false;
 
 function shootGun() {
-    if (pState.ammo <= 0) { reloadGun(); return; }
-    pState.ammo--; updateHUD();
+    let wData = weaponAmmo[currentSlot];
+    if (currentSlot !== 3 && wData.cur <= 0) { reloadGun(); return; }
 
-    gunGroup.position.z = isAiming ? -0.22 : -0.32;
-    muzzleFlash.material.opacity = 1;
-    setTimeout(() => { gunGroup.position.z = isAiming ? -0.25 : -0.42; muzzleFlash.material.opacity = 0; }, 50);
+    if (currentSlot !== 3) wData.cur--;
+    updateHUD();
+
+    // Tepme / Animasyon
+    gunGroup.position.z = -0.32;
+    if(currentSlot !== 3) muzzleFlash.material.opacity = 1;
+
+    setTimeout(() => { gunGroup.position.z = -0.42; muzzleFlash.material.opacity = 0; }, 60);
 
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
@@ -435,7 +527,14 @@ function shootGun() {
         const intersects = raycaster.intersectObjects([enemy.head, enemy.body]);
         if(intersects.length > 0) {
             let hitHead = intersects[0].object.userData.type === 'head';
-            enemy.hp -= hitHead ? 100 : 35; // HEADSHOT TEK ATAR
+            
+            // Silaha Göre Hasar Hesaplama
+            let dmg = 35;
+            if (currentSlot === 1) dmg = hitHead ? 100 : 35; // Tüfek Headshot tek atar
+            if (currentSlot === 2) dmg = hitHead ? 70 : 25;  // Tabanca
+            if (currentSlot === 3) dmg = 60;                // Bıçak
+
+            enemy.hp -= dmg;
             pState.score += hitHead ? 150 : 50;
 
             if(enemy.hp <= 0) {
@@ -449,6 +548,7 @@ function shootGun() {
 }
 
 function toggleAim() {
+    if (currentSlot === 3) return; // Bıçakta dürbün açılmaz
     isAiming = !isAiming;
     camera.fov = isAiming ? 45 : 75;
     gunGroup.position.set(isAiming ? 0 : 0.22, isAiming ? -0.14 : -0.22, isAiming ? -0.25 : -0.42);
@@ -456,9 +556,13 @@ function toggleAim() {
 }
 
 function reloadGun() {
-    if (pState.ammo < 30 && pState.reserve > 0) {
-        let reloadAmount = Math.min(30 - pState.ammo, pState.reserve);
-        pState.reserve -= reloadAmount; pState.ammo += reloadAmount;
+    if (currentSlot === 3) return;
+    let wData = weaponAmmo[currentSlot];
+    let maxAmmo = (currentSlot === 1) ? 30 : 12;
+
+    if (wData.cur < maxAmmo && wData.res > 0) {
+        let reloadAmount = Math.min(maxAmmo - wData.cur, wData.res);
+        wData.res -= reloadAmount; wData.cur += reloadAmount;
         gunGroup.rotation.z = -0.5;
         setTimeout(() => gunGroup.rotation.z = 0, 350);
         updateHUD();
@@ -471,8 +575,8 @@ function crouchPlayer() { isCrouching = !isCrouching; playerGroup.position.y = i
 function updateHUD() {
     document.getElementById('kills').innerText = pState.kills;
     document.getElementById('score').innerText = pState.score;
-    document.getElementById('ammo-cur').innerText = pState.ammo;
-    document.getElementById('ammo-reserve').innerText = pState.reserve;
+    document.getElementById('ammo-cur').innerText = weaponAmmo[currentSlot].cur;
+    document.getElementById('ammo-reserve').innerText = weaponAmmo[currentSlot].res;
     document.getElementById('hp').innerText = Math.max(0, Math.round(pState.hp));
     document.getElementById('hp-fill').style.width = Math.max(0, pState.hp) + '%';
 }
@@ -500,7 +604,7 @@ function animate() {
         }
     }
 
-    // PC Klavye Hareketi Entegrasyonu
+    // PC Klavye Kontrolleri
     if (!isMobile) {
         moveInput = { x: 0, y: 0 };
         if (keys['KeyW']) moveInput.y = -1;
@@ -509,22 +613,25 @@ function animate() {
         if (keys['KeyD']) moveInput.x = 1;
     }
 
-    // Yürüme & Silah Sallanması
+    // Yürüme Hızı (Bıçak Elindeyse Hız %35 Artar!)
     if (moveInput.x !== 0 || moveInput.y !== 0) {
-        let speed = isCrouching ? 3.0 : 7.2;
+        let baseSpeed = (currentSlot === 3) ? 9.8 : 7.2; // Bıçak Hız Bonusu
+        let speed = isCrouching ? 3.0 : baseSpeed;
+
         let forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
         let side = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
         let moveDir = forward.multiplyScalar(-moveInput.y).add(side.multiplyScalar(moveInput.x));
         playerGroup.position.add(moveDir.multiplyScalar(speed * dt));
 
-        stepTimer += dt * 10;
+        // Silah Sallanması
+        stepTimer += dt * (currentSlot === 3 ? 14 : 10);
         if (!isAiming) {
             gunGroup.position.x = 0.22 + Math.cos(stepTimer * 0.5) * 0.015;
             gunGroup.position.y = -0.22 + Math.sin(stepTimer) * 0.015;
         }
     }
 
-    // Düşman Bot Saldırısı
+    // Düşman Bot Mantığı
     enemies.forEach((enemy) => {
         enemy.group.lookAt(playerGroup.position.x, 0, playerGroup.position.z);
         let dist = enemy.group.position.distanceTo(playerGroup.position);
