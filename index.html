@@ -3,58 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Tactical FPS Pro - Realistic & Dynamic Edition</title>
+    <title>Tactical FPS Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; touch-action: none; }
-        body, html { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: system-ui, -apple-system, sans-serif; }
+        body, html { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: system-ui, sans-serif; }
 
-        /* ANA MENÜ */
         #main-menu {
             position: absolute; inset: 0; background: radial-gradient(circle, #1a202c, #0b0e14); z-index: 300;
             display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff;
         }
-        #main-menu h1 {
-            font-size: 52px; letter-spacing: 5px; text-shadow: 0 0 30px #00ffcc;
-            margin-bottom: 10px;
+        #main-menu h1 { font-size: 48px; letter-spacing: 4px; text-shadow: 0 0 30px #00ffcc; margin-bottom: 8px; }
+        #main-menu .sub { color: rgba(255,255,255,0.3); font-size: 13px; margin-bottom: 30px; letter-spacing: 2px; }
+        .m-btn {
+            padding: 12px 44px; background: rgba(255,255,255,0.05); border: 2px solid rgba(0,255,204,0.25);
+            color: #fff; font-weight: 700; font-size: 15px; border-radius: 30px; cursor: pointer;
+            margin: 5px 0; width: 220px; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px;
         }
-        #main-menu .subtitle {
-            color: rgba(255,255,255,0.4); font-size: 14px; margin-bottom: 40px;
-            letter-spacing: 2px;
-        }
-        .menu-btn {
-            padding: 14px 50px; background: rgba(255,255,255,0.05); border: 2px solid rgba(0, 255, 204, 0.3);
-            color: #fff; font-weight: 700; font-size: 16px; border-radius: 30px; cursor: pointer;
-            margin: 6px 0; width: 240px; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px;
-            backdrop-filter: blur(4px);
-        }
-        .menu-btn:hover { background: rgba(0, 255, 204, 0.15); border-color: #00ffcc; box-shadow: 0 0 25px rgba(0,255,204,0.2); transform: scale(1.02); }
-        .menu-btn.primary { background: linear-gradient(135deg, #00ffcc, #00b894); color: #000; border-color: #00ffcc; }
-        .menu-btn.primary:hover { box-shadow: 0 0 40px rgba(0,255,204,0.4); }
-        .menu-btn.danger { border-color: #ff4757; }
-        .menu-btn.danger:hover { background: rgba(255,71,87,0.15); border-color: #ff4757; }
+        .m-btn:hover { background: rgba(0,255,204,0.12); border-color: #00ffcc; }
+        .m-btn.primary { background: linear-gradient(135deg, #00ffcc, #00b894); color: #000; border-color: #00ffcc; }
+        .m-btn.primary:hover { box-shadow: 0 0 35px rgba(0,255,204,0.3); }
 
-        /* Start Overlay (Eski başlangıç ekranı yerine main menu kullanılıyor) */
-        #start-screen { display: none; }
-
-        /* Top HUD */
         #hud-top {
             position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 10;
-            display: flex; gap: 18px; background: rgba(15, 23, 42, 0.85); padding: 8px 24px;
-            border-radius: 20px; border: 1.5px solid rgba(0, 255, 204, 0.4); color: #fff; font-weight: 800; font-size: 14px;
+            display: flex; gap: 18px; background: rgba(15,23,42,0.85); padding: 8px 24px;
+            border-radius: 20px; border: 1.5px solid rgba(0,255,204,0.4); color: #fff; font-weight: 800; font-size: 14px;
             backdrop-filter: blur(8px);
         }
         .score-val { color: #00ffcc; font-size: 16px; }
 
-        /* Pause Button */
         #btn-pause-ui {
             position: absolute; top: 12px; right: 12px; z-index: 50;
-            width: 44px; height: 44px; border-radius: 50%; background: rgba(15, 23, 42, 0.85);
-            border: 1.5px solid rgba(255, 255, 255, 0.3); display: none; align-items: center; justify-content: center;
-            cursor: pointer; pointer-events: auto; backdrop-filter: blur(4px);
+            width: 44px; height: 44px; border-radius: 50%; background: rgba(15,23,42,0.85);
+            border: 1.5px solid rgba(255,255,255,0.3); display: none; align-items: center; justify-content: center;
+            cursor: pointer; backdrop-filter: blur(4px);
         }
 
-        /* Bottom HUD */
         #hud-bottom {
             position: absolute; bottom: 20px; left: 20px; z-index: 10;
             display: flex; flex-direction: column; gap: 8px; pointer-events: none;
@@ -67,304 +51,256 @@
         .hp-text { position: absolute; inset: 0; font-size: 10px; font-weight: 900; color: #fff; display: flex; align-items: center; justify-content: center; }
         #ammo-ui { color: #eccc68; font-size: 18px; font-weight: 900; text-shadow: 1px 1px 4px #000; letter-spacing: 1px; }
 
-        /* WEAPON SLOTS HUD */
         #weapon-slots {
             position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 30;
-            display: none; gap: 10px; background: rgba(15, 23, 42, 0.7); padding: 6px; border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px);
+            display: none; gap: 10px; background: rgba(15,23,42,0.7); padding: 6px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(8px);
         }
         .slot-box {
-            width: 55px; height: 55px; border-radius: 8px; background: rgba(255, 255, 255, 0.05);
-            border: 1.5px solid rgba(255, 255, 255, 0.2); display: flex; flex-direction: column;
+            width: 55px; height: 55px; border-radius: 8px; background: rgba(255,255,255,0.05);
+            border: 1.5px solid rgba(255,255,255,0.2); display: flex; flex-direction: column;
             align-items: center; justify-content: center; cursor: pointer; color: #aaa; transition: 0.2s;
         }
-        .slot-box.active {
-            border-color: #00ffcc; background: rgba(0, 255, 204, 0.25); color: #fff;
-            box-shadow: 0 0 12px rgba(0, 255, 204, 0.4); transform: scale(1.05);
-        }
-        .slot-box svg { width: 22px; height: 22px; fill: currentColor; }
-        .slot-box span { font-size: 9px; font-weight: bold; margin-top: 2px; }
+        .slot-box.active { border-color: #00ffcc; background: rgba(0,255,204,0.2); color: #fff; box-shadow: 0 0 12px rgba(0,255,204,0.3); }
+        .slot-box svg { width: 20px; height: 20px; fill: currentColor; }
+        .slot-box span { font-size: 8px; font-weight: bold; margin-top: 2px; }
 
-        /* Dynamic Crosshair */
         #crosshair {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 16px; height: 16px; pointer-events: none; z-index: 15;
-            display: flex; align-items: center; justify-content: center; transition: transform 0.05s;
+            display: flex; align-items: center; justify-content: center;
         }
         #crosshair::before, #crosshair::after { content: ''; position: absolute; background: #00ffcc; box-shadow: 0 0 6px #00ffcc; }
         #crosshair::before { width: 2px; height: 12px; }
         #crosshair::after { width: 12px; height: 2px; }
 
-        /* Mobile Controls */
         #mobile-controls { display: none; }
         #touch-container { position: absolute; inset: 0; z-index: 20; }
         #move-zone { position: absolute; top: 0; left: 0; width: 50vw; height: 100vh; }
         #look-zone { position: absolute; top: 0; right: 0; width: 50vw; height: 100vh; }
-        
         #joy-base {
             position: absolute; width: 110px; height: 110px; background: rgba(255,255,255,0.08);
-            border: 2px solid rgba(0, 255, 204, 0.5); border-radius: 50%; display: none; pointer-events: none;
+            border: 2px solid rgba(0,255,204,0.4); border-radius: 50%; display: none; pointer-events: none;
         }
         #joy-knob {
             position: absolute; top: 30px; left: 30px; width: 50px; height: 50px;
-            background: rgba(0, 255, 204, 0.75); border-radius: 50%; pointer-events: none; box-shadow: 0 0 12px #00ffcc;
+            background: rgba(0,255,204,0.7); border-radius: 50%; pointer-events: none; box-shadow: 0 0 12px #00ffcc;
         }
 
         #btn-group { position: absolute; bottom: 20px; right: 20px; display: grid; grid-template-columns: repeat(3, 58px); gap: 10px; z-index: 30; }
         .btn-svg {
-            width: 58px; height: 58px; border-radius: 50%; background: rgba(15, 23, 42, 0.85);
-            border: 2px solid rgba(255,255,255,0.3); color: white;
+            width: 58px; height: 58px; border-radius: 50%; background: rgba(15,23,42,0.85);
+            border: 2px solid rgba(255,255,255,0.25); color: #fff;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4); backdrop-filter: blur(4px); cursor: pointer;
         }
         .btn-svg svg { width: 24px; height: 24px; fill: currentColor; }
         .btn-fire { background: linear-gradient(135deg, #ff4757, #ff6b81); border-color: #ff7675; grid-row: span 2; height: 126px; border-radius: 30px; }
 
-        /* SETTINGS MODAL - DETAYLI */
         #settings-menu {
-            display: none; position: absolute; inset: 0; background: rgba(11, 14, 20, 0.95);
+            display: none; position: absolute; inset: 0; background: rgba(11,14,20,0.95);
             z-index: 100; flex-direction: column; align-items: center; justify-content: center; color: #fff;
-            backdrop-filter: blur(10px); overflow-y: auto; padding: 20px;
+            backdrop-filter: blur(10px); padding: 20px;
         }
-        .settings-title {
-            font-size: 32px; color: #00ffcc; text-shadow: 0 0 20px rgba(0,255,204,0.3);
-            margin-bottom: 25px; letter-spacing: 3px;
-        }
+        .settings-title { font-size: 28px; color: #00ffcc; margin-bottom: 20px; letter-spacing: 2px; }
         .setting-box {
-            width: 300px; margin: 8px 0; display: flex; justify-content: space-between; align-items: center;
-            font-weight: 500; font-size: 14px; padding: 6px 12px;
-            background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 2px solid rgba(0,255,204,0.2);
+            width: 280px; margin: 6px 0; display: flex; justify-content: space-between; align-items: center;
+            font-weight: 500; font-size: 14px; padding: 4px 8px; background: rgba(255,255,255,0.03); border-radius: 6px;
         }
-        .setting-box label { color: rgba(255,255,255,0.8); }
-        .setting-box select, .setting-box input[type="range"] {
-            padding: 4px 8px; border-radius: 6px; background: #1e272e; color: #fff;
-            border: 1px solid rgba(0,255,204,0.3); outline: none; cursor: pointer;
-        }
-        .setting-box input[type="range"] { width: 120px; accent-color: #00ffcc; }
-        .setting-box input[type="checkbox"] { accent-color: #00ffcc; width: 18px; height: 18px; cursor: pointer; }
-        .setting-value { color: #00ffcc; font-weight: bold; min-width: 30px; text-align: right; }
-
-        .settings-subtitle {
-            color: rgba(255,255,255,0.3); font-size: 11px; text-transform: uppercase; letter-spacing: 2px;
-            margin: 10px 0 5px 0; width: 300px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05);
-            padding-bottom: 4px;
-        }
-
+        .setting-box input[type="range"] { width: 100px; accent-color: #00ffcc; }
+        .setting-box select { padding: 4px; border-radius: 4px; background: #1e272e; color: #fff; border: 1px solid rgba(0,255,204,0.3); }
+        .setting-value { color: #00ffcc; font-weight: bold; min-width: 28px; text-align: right; }
         .settings-close-btn {
-            padding: 12px 40px; background: linear-gradient(135deg, #00ffcc, #00b894);
-            color: #000; font-weight: 900; font-size: 16px; border: none; border-radius: 30px;
-            cursor: pointer; margin-top: 20px; text-transform: uppercase; letter-spacing: 2px;
-            transition: transform 0.2s;
+            padding: 10px 36px; background: linear-gradient(135deg, #00ffcc, #00b894);
+            color: #000; font-weight: 900; font-size: 15px; border: none; border-radius: 30px;
+            cursor: pointer; margin-top: 16px; text-transform: uppercase; letter-spacing: 1px;
         }
-        .settings-close-btn:active { transform: scale(0.95); }
 
-        /* GAME OVER */
-        #game-over { display: none; position: absolute; inset: 0; background: rgba(10, 10, 15, 0.95); color: #ff4757; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-
-        /* MOD MENÜSÜ */
         #mod-menu {
-            display: none; position: absolute; inset: 0; background: rgba(11, 14, 20, 0.95);
+            display: none; position: absolute; inset: 0; background: rgba(11,14,20,0.95);
             z-index: 200; flex-direction: column; align-items: center; justify-content: center; color: #fff;
             backdrop-filter: blur(10px);
         }
         .mod-btn {
-            padding: 12px 40px; background: rgba(255,255,255,0.05); border: 2px solid rgba(0,255,204,0.2);
-            color: #fff; font-weight: 700; font-size: 15px; border-radius: 30px; cursor: pointer;
-            margin: 5px 0; width: 220px; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px;
+            padding: 10px 36px; background: rgba(255,255,255,0.05); border: 2px solid rgba(0,255,204,0.2);
+            color: #fff; font-weight: 700; font-size: 14px; border-radius: 30px; cursor: pointer;
+            margin: 4px 0; width: 200px; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px;
         }
         .mod-btn:hover { background: rgba(0,255,204,0.1); border-color: #00ffcc; }
-        .mod-btn.active { background: rgba(0,255,204,0.2); border-color: #00ffcc; box-shadow: 0 0 20px rgba(0,255,204,0.2); }
+        .mod-btn.active { background: rgba(0,255,204,0.15); border-color: #00ffcc; }
+
+        #game-over { display: none; position: absolute; inset: 0; background: rgba(10,10,15,0.95); color: #ff4757; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        #game-over h1 { font-size: 40px; text-shadow: 0 0 15px #ff4757; }
+        .go-btn { padding: 10px 32px; background: #ff4757; color: #fff; font-weight: 900; border: none; border-radius: 30px; cursor: pointer; margin: 6px; }
+        .go-btn.green { background: #00b894; }
     </style>
 </head>
 <body>
 
-    <!-- ANA MENÜ -->
-    <div id="main-menu">
-        <h1>⚡ TACTICAL FPS</h1>
-        <div class="subtitle">GERÇEKÇİ • DİNAMİK • TAKTİK</div>
-        <button class="menu-btn primary" onclick="startGame()">▶ OYUNA BAŞLA</button>
-        <button class="menu-btn" onclick="openSettings()">⚙ AYARLAR</button>
-        <button class="menu-btn" onclick="openModMenu()">🎯 MODLAR</button>
-        <button class="menu-btn danger" onclick="alert('Görüşürüz dostum! 👋')">✕ ÇIKIŞ</button>
-        <div style="margin-top: 30px; font-size: 12px; color: rgba(255,255,255,0.15); letter-spacing: 1px;" id="device-info">Cihaz Algılanıyor...</div>
+<!-- ANA MENU -->
+<div id="main-menu">
+    <h1>⚡ TACTICAL FPS</h1>
+    <div class="sub">GERÇEKÇİ • TAKTİK • HIZLI</div>
+    <button class="m-btn primary" onclick="startGame()">▶ BAŞLA</button>
+    <button class="m-btn" onclick="openSettings()">⚙ AYARLAR</button>
+    <button class="m-btn" onclick="openModMenu()">🎯 MODLAR</button>
+    <button class="m-btn" onclick="alert('Görüşürüz!')">✕ ÇIKIŞ</button>
+    <div style="margin-top:20px; font-size:11px; color:rgba(255,255,255,0.15);" id="device-info">Yükleniyor...</div>
+</div>
+
+<!-- MOD MENU -->
+<div id="mod-menu">
+    <h2 style="color:#00ffcc; margin-bottom:16px;">🎯 MODLAR</h2>
+    <button class="mod-btn active" id="mod-normal" onclick="selectMod('normal')">NORMAL</button>
+    <button class="mod-btn" id="mod-easy" onclick="selectMod('easy')">KOLAY</button>
+    <button class="mod-btn" id="mod-hard" onclick="selectMod('hard')">ZOR</button>
+    <button class="mod-btn" id="mod-wave" onclick="selectMod('wave')">DALGA</button>
+    <button class="m-btn" style="width:140px; margin-top:12px;" onclick="closeModMenu()">← GERİ</button>
+    <div style="margin-top:8px; font-size:12px; color:rgba(255,255,255,0.3);">Mevcut: <span id="current-mod-label">Normal</span></div>
+</div>
+
+<!-- HUD -->
+<div id="hud-top">
+    <div>LEŞ: <span id="kills" class="score-val">0</span></div>
+    <div style="color:rgba(255,255,255,0.2);">|</div>
+    <div>SKOR: <span id="score" class="score-val" style="color:#eccc68;">0</span></div>
+    <div style="color:rgba(255,255,255,0.2);">|</div>
+    <div>MOD: <span id="hud-mod" style="color:#00ffcc; font-size:11px;">NORMAL</span></div>
+</div>
+
+<div id="btn-pause-ui" onclick="pauseGame()">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+</div>
+
+<div id="hud-bottom">
+    <div id="ammo-ui">AMMO: <span id="ammo-cur">30</span> / <span id="ammo-reserve">90</span></div>
+    <div class="hp-bar">
+        <div id="hp-fill"></div>
+        <div class="hp-text">HP: <span id="hp">100</span></div>
     </div>
+</div>
 
-    <!-- MOD MENÜSÜ -->
-    <div id="mod-menu">
-        <h2 style="color:#00ffcc; margin-bottom:20px; text-shadow: 0 0 15px #00ffcc;">🎯 OYUN MODLARI</h2>
-        <button class="mod-btn active" id="mod-normal" onclick="selectMod('normal')">🟢 NORMAL</button>
-        <button class="mod-btn" id="mod-easy" onclick="selectMod('easy')">🟡 KOLAY</button>
-        <button class="mod-btn" id="mod-hard" onclick="selectMod('hard')">🔴 ZOR</button>
-        <button class="mod-btn" id="mod-wave" onclick="selectMod('wave')">🌊 DALGA</button>
-        <button class="menu-btn" style="margin-top:20px; width:160px;" onclick="closeModMenu()">← GERİ</button>
-        <div style="margin-top: 12px; font-size:12px; color:rgba(255,255,255,0.3);">Mevcut Mod: <span id="current-mod-label">Normal</span></div>
+<div id="crosshair"></div>
+
+<div id="weapon-slots">
+    <div class="slot-box active" id="slot-1" onclick="switchWeapon(1)">
+        <svg viewBox="0 0 24 24"><path d="M21 7l-5-2-4 2-4-2-5 2v10l5-2 4 2 4-2 5 2V7z"/></svg>
+        <span>TÜFEK</span>
     </div>
-
-    <!-- ESKİ START EKRANI (GİZLİ) -->
-    <div id="start-screen"></div>
-
-    <div id="crosshair"></div>
-
-    <div id="hud-top">
-        <div>LEŞ: <span id="kills" class="score-val">0</span></div>
-        <div style="color:rgba(255,255,255,0.2);">|</div>
-        <div>SKOR: <span id="score" class="score-val" style="color:#eccc68;">0</span></div>
-        <div style="color:rgba(255,255,255,0.2);">|</div>
-        <div>MOD: <span id="hud-mod" style="color:#00ffcc; font-size:12px;">NORMAL</span></div>
+    <div class="slot-box" id="slot-2" onclick="switchWeapon(2)">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+        <span>TABANCA</span>
     </div>
-
-    <div id="btn-pause-ui">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+    <div class="slot-box" id="slot-3" onclick="switchWeapon(3)">
+        <svg viewBox="0 0 24 24"><path d="M14.12 10.47L12 12.59l-2.12-2.12-2.12 2.12L9.88 14.71 12 12.59l2.12 2.12 2.12-2.12zM19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+        <span>BIÇAK</span>
     </div>
+</div>
 
-    <div id="hud-bottom">
-        <div id="ammo-ui">AMMO: <span id="ammo-cur">30</span> / <span id="ammo-reserve">90</span></div>
-        <div class="hp-bar">
-            <div id="hp-fill"></div>
-            <div class="hp-text">HP: <span id="hp">100</span></div>
+<!-- MOBIL KONTROLLER -->
+<div id="mobile-controls">
+    <div id="touch-container">
+        <div id="move-zone"></div>
+        <div id="look-zone"></div>
+        <div id="joy-base"><div id="joy-knob"></div></div>
+    </div>
+    <div id="btn-group">
+        <div class="btn-svg" id="btn-aim" onclick="toggleAim()">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7.44-7.93H7v-2H5.56c.44-4.08 3.5-7.44 7.44-7.93V5h2v1.57c3.95.49 7 3.85 7.44 7.93H18v2h1.44c-.44 4.08-3.5 7.44-7.44 7.93V19h-2v.93z"/></svg>
         </div>
-    </div>
-
-    <!-- 3'LÜ SİLAH SLOTLARI -->
-    <div id="weapon-slots">
-        <div class="slot-box active" id="slot-1" onclick="switchWeapon(1)">
-            <svg viewBox="0 0 24 24"><path d="M21 7l-5-2-4 2-4-2-5 2v10l5-2 4 2 4-2 5 2V7z"/></svg>
-            <span>TÜFEK</span>
+        <div class="btn-svg" id="btn-reload" onclick="reloadGun()">
+            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
         </div>
-        <div class="slot-box" id="slot-2" onclick="switchWeapon(2)">
-            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
-            <span>TABANCA</span>
+        <div class="btn-svg btn-fire" id="btn-fire" onmousedown="shootGun()" ontouchstart="shootGun()">
+            <svg viewBox="0 0 24 24"><path d="M12 23c6.075 0 11-4.925 11-11S18.075 1 12 1 1 5.925 1 12s4.925 11 11 11zm0-18a7 7 0 110 14 7 7 0 010-14z"/></svg>
         </div>
-        <div class="slot-box" id="slot-3" onclick="switchWeapon(3)">
-            <svg viewBox="0 0 24 24"><path d="M14.12 10.47L12 12.59l-2.12-2.12-2.12 2.12L9.88 14.71 12 12.59l2.12 2.12 2.12-2.12zM19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-            <span>BIÇAK</span>
+        <div class="btn-svg" id="btn-jump" onclick="jumpPlayer()">
+            <svg viewBox="0 0 24 24"><path d="M12 4l-8 8h5v8h6v-8h5z"/></svg>
         </div>
-    </div>
-
-    <!-- Mobil Kontroller -->
-    <div id="mobile-controls">
-        <div id="touch-container">
-            <div id="move-zone"></div>
-            <div id="look-zone"></div>
-            <div id="joy-base"><div id="joy-knob"></div></div>
-        </div>
-
-        <div id="btn-group">
-            <div class="btn-svg" id="btn-aim">
-                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7.44-7.93H7v-2H5.56c.44-4.08 3.5-7.44 7.44-7.93V5h2v1.57c3.95.49 7 3.85 7.44 7.93H18v2h1.44c-.44 4.08-3.5 7.44-7.44 7.93V19h-2v.93z"/></svg>
-            </div>
-            <div class="btn-svg" id="btn-reload">
-                <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-            </div>
-            <div class="btn-svg btn-fire" id="btn-fire">
-                <svg viewBox="0 0 24 24"><path d="M12 23c6.075 0 11-4.925 11-11S18.075 1 12 1 1 5.925 1 12s4.925 11 11 11zm0-18a7 7 0 110 14 7 7 0 010-14z"/></svg>
-            </div>
-            <div class="btn-svg" id="btn-jump">
-                <svg viewBox="0 0 24 24"><path d="M12 4l-8 8h5v8h6v-8h5z"/></svg>
-            </div>
-            <div class="btn-svg" id="btn-crouch">
-                <svg viewBox="0 0 24 24"><path d="M12 20l8-8h-5V4h-6v8H4z"/></svg>
-            </div>
+        <div class="btn-svg" id="btn-crouch" onclick="crouchPlayer()">
+            <svg viewBox="0 0 24 24"><path d="M12 20l8-8h-5V4h-6v8H4z"/></svg>
         </div>
     </div>
+</div>
 
-    <!-- DETAYLI AYARLAR MENÜSÜ -->
-    <div id="settings-menu">
-        <div class="settings-title">⚙ OYUN AYARLARI</div>
-        
-        <div class="settings-subtitle">GÖRÜNTÜ</div>
-        
-        <div class="setting-box">
-            <label>Grafik Kalitesi</label>
-            <select id="gfx-quality" onchange="applySettings()">
-                <option value="high">Yüksek</option>
-                <option value="low">Düşük</option>
-            </select>
-        </div>
-
-        <div class="setting-box">
-            <label>Görüş Açısı (FOV)</label>
-            <input type="range" id="fov-slider" min="60" max="100" value="75" oninput="updateFOV(this.value)">
-            <span class="setting-value" id="fov-value">75</span>
-        </div>
-
-        <div class="setting-box">
-            <label>Crosshair Rengi</label>
-            <input type="color" id="crosshair-color" value="#00ffcc" onchange="updateCrosshairColor()">
-        </div>
-
-        <div class="setting-box">
-            <label>Crosshair Boyutu</label>
-            <input type="range" id="crosshair-size" min="8" max="28" value="16" oninput="updateCrosshairSize(this.value)">
-            <span class="setting-value" id="ch-size-value">16</span>
-        </div>
-
-        <div class="settings-subtitle">KONTROL</div>
-
-        <div class="setting-box">
-            <label>Fare Hassasiyeti</label>
-            <input type="range" id="sens-slider" min="1" max="15" value="5" oninput="updateSensLabel(this.value)">
-            <span class="setting-value" id="sens-value">5</span>
-        </div>
-
-        <div class="setting-box" id="gyro-option" style="display:none;">
-            <label>Jiroskop (Mobil)</label>
-            <input type="checkbox" id="gyro-toggle" onchange="toggleGyro()">
-        </div>
-
-        <div class="settings-subtitle">BUTON KONUMLARI (MOBİL)</div>
-
-        <div class="setting-box">
-            <label>Ateş Butonu</label>
-            <select id="fire-pos" onchange="applyButtonLayout()">
-                <option value="right">Sağ</option>
-                <option value="left">Sol</option>
-                <option value="center">Orta</option>
-            </select>
-        </div>
-
-        <div class="setting-box">
-            <label>Kontrol Boyutu</label>
-            <input type="range" id="btn-size" min="40" max="80" value="58" oninput="updateBtnSize(this.value)">
-            <span class="setting-value" id="btn-size-value">58</span>
-        </div>
-
-        <div class="settings-subtitle">SES (GELECEK)</div>
-        <div class="setting-box" style="opacity:0.4;">
-            <label>Ses Seviyesi</label>
-            <input type="range" min="0" max="100" value="70" disabled>
-            <span class="setting-value">70</span>
-        </div>
-
-        <button class="settings-close-btn" onclick="saveAndCloseSettings()">💾 KAYDET & KAPAT</button>
+<!-- AYARLAR -->
+<div id="settings-menu">
+    <div class="settings-title">⚙ AYARLAR</div>
+    <div class="setting-box">
+        <span>Grafik</span>
+        <select id="gfx-quality" onchange="applySettings()">
+            <option value="high">Yüksek</option>
+            <option value="low">Düşük</option>
+        </select>
     </div>
-
-    <div id="game-over">
-        <h1 style="font-size: 42px; text-shadow: 0 0 15px #ff4757;">💀 ÖLDÜN!</h1>
-        <p style="color:#fff; margin:10px 0;">Skor: <span id="final-score">0</span> | Leş: <span id="final-kills">0</span></p>
-        <button onclick="location.reload()" class="menu-btn primary" style="width:auto; padding:12px 40px;">🔄 YENİDEN BAŞLA</button>
-        <button onclick="goToMainMenu()" class="menu-btn" style="width:auto; padding:12px 40px; margin-top:8px;">🏠 ANA MENÜ</button>
+    <div class="setting-box">
+        <span>FOV</span>
+        <input type="range" id="fov-slider" min="60" max="100" value="75" oninput="updateFOV(this.value)">
+        <span class="setting-value" id="fov-value">75</span>
     </div>
+    <div class="setting-box">
+        <span>Crosshair Rengi</span>
+        <input type="color" id="crosshair-color" value="#00ffcc" onchange="updateCrosshairColor()">
+    </div>
+    <div class="setting-box">
+        <span>Crosshair Boyut</span>
+        <input type="range" id="crosshair-size" min="8" max="28" value="16" oninput="updateCrosshairSize(this.value)">
+        <span class="setting-value" id="ch-size-value">16</span>
+    </div>
+    <div class="setting-box">
+        <span>Hassasiyet</span>
+        <input type="range" id="sens-slider" min="1" max="15" value="5" oninput="updateSens(this.value)">
+        <span class="setting-value" id="sens-value">5</span>
+    </div>
+    <div class="setting-box" id="gyro-option" style="display:none;">
+        <span>Jiroskop</span>
+        <input type="checkbox" id="gyro-toggle" onchange="toggleGyro()">
+    </div>
+    <div class="setting-box">
+        <span>Ateş Butonu</span>
+        <select id="fire-pos" onchange="applyButtonLayout()">
+            <option value="right">Sağ</option>
+            <option value="left">Sol</option>
+            <option value="center">Orta</option>
+        </select>
+    </div>
+    <div class="setting-box">
+        <span>Buton Boyut</span>
+        <input type="range" id="btn-size" min="40" max="80" value="58" oninput="updateBtnSize(this.value)">
+        <span class="setting-value" id="btn-size-value">58</span>
+    </div>
+    <button class="settings-close-btn" onclick="saveAndCloseSettings()">💾 KAYDET</button>
+</div>
+
+<!-- GAME OVER -->
+<div id="game-over">
+    <h1>💀 ÖLDÜN!</h1>
+    <p style="color:#fff; margin:8px 0;">Skor: <span id="final-score">0</span> | Leş: <span id="final-kills">0</span></p>
+    <button class="go-btn" onclick="location.reload()">🔄 YENİDEN</button>
+    <button class="go-btn green" onclick="goToMainMenu()">🏠 ANA MENÜ</button>
+</div>
 
 <script>
-// ============================================================
-// 1. CİHAZ VE MOD DEĞİŞKENLERİ
-// ============================================================
+// ========== 1. CİHAZ BİLGİSİ ==========
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-document.getElementById('device-info').innerText = isMobile ? "📱 Mobil Cihaz" : "💻 PC";
+document.getElementById('device-info').innerText = isMobile ? '📱 Mobil' : '💻 PC';
 
-// MOD SEÇİMİ
+if (isMobile) {
+    document.getElementById('mobile-controls').style.display = 'block';
+    document.getElementById('btn-pause-ui').style.display = 'flex';
+    document.getElementById('weapon-slots').style.display = 'flex';
+    document.getElementById('gyro-option').style.display = 'flex';
+}
+
+// ========== 2. MOD SİSTEMİ ==========
 let currentMod = 'normal';
 const modSettings = {
-    normal: { label: 'NORMAL', enemySpeed: 3.5, enemyDamage: 12, enemyHP: 100, spawnCount: 6, playerSpeed: 7.2 },
-    easy: { label: 'KOLAY', enemySpeed: 2.5, enemyDamage: 7, enemyHP: 80, spawnCount: 4, playerSpeed: 8.0 },
-    hard: { label: 'ZOR', enemySpeed: 4.5, enemyDamage: 18, enemyHP: 130, spawnCount: 8, playerSpeed: 6.5 },
-    wave: { label: 'DALGA', enemySpeed: 3.0, enemyDamage: 10, enemyHP: 90, spawnCount: 3, playerSpeed: 7.5 }
+    normal: { label: 'NORMAL', enemySpeed: 3.5, enemyDamage: 12, enemyHP: 100, spawnCount: 6 },
+    easy: { label: 'KOLAY', enemySpeed: 2.5, enemyDamage: 7, enemyHP: 80, spawnCount: 4 },
+    hard: { label: 'ZOR', enemySpeed: 5.0, enemyDamage: 18, enemyHP: 130, spawnCount: 8 },
+    wave: { label: 'DALGA', enemySpeed: 3.2, enemyDamage: 10, enemyHP: 90, spawnCount: 3 }
 };
-
-let waveLevel = 1;
-let enemiesSpawnedThisWave = 0;
-let maxEnemiesPerWave = 5;
+let waveLevel = 1, enemiesSpawnedThisWave = 0, maxEnemiesPerWave = 5;
 
 function selectMod(mod) {
     currentMod = mod;
@@ -372,64 +308,42 @@ function selectMod(mod) {
     document.getElementById(`mod-${mod}`).classList.add('active');
     document.getElementById('current-mod-label').innerText = modSettings[mod].label;
     document.getElementById('hud-mod').innerText = modSettings[mod].label;
-    if (mod === 'wave') {
-        waveLevel = 1;
-        enemiesSpawnedThisWave = 0;
-        maxEnemiesPerWave = 5;
-    }
+    if (mod === 'wave') { waveLevel = 1; enemiesSpawnedThisWave = 0; maxEnemiesPerWave = 5; }
     localStorage.setItem('fps_mod', mod);
 }
 
 function openModMenu() {
-    if (isGameStarted && pState.hp > 0) {
-        pauseGame();
-        document.getElementById('mod-menu').style.display = 'flex';
-    } else {
-        document.getElementById('main-menu').style.display = 'none';
-        document.getElementById('mod-menu').style.display = 'flex';
-    }
+    if (isGameStarted && pState.hp > 0) { pauseGame(); document.getElementById('mod-menu').style.display = 'flex'; }
+    else { document.getElementById('main-menu').style.display = 'none'; document.getElementById('mod-menu').style.display = 'flex'; }
 }
-
 function closeModMenu() {
     document.getElementById('mod-menu').style.display = 'none';
-    if (isGameStarted && pState.hp > 0) {
-        resumeGame();
-    } else {
-        document.getElementById('main-menu').style.display = 'flex';
-    }
+    if (isGameStarted && pState.hp > 0) resumeGame();
+    else document.getElementById('main-menu').style.display = 'flex';
 }
 
-// ============================================================
-// 2. KAYIT SİSTEMİ (localStorage)
-// ============================================================
+// ========== 3. KAYIT SİSTEMİ ==========
 function loadSettings() {
     try {
         const saved = localStorage.getItem('fps_settings');
         if (saved) {
-            const data = JSON.parse(saved);
-            document.getElementById('gfx-quality').value = data.gfx || 'high';
-            document.getElementById('fov-slider').value = data.fov || 75;
-            document.getElementById('crosshair-color').value = data.chColor || '#00ffcc';
-            document.getElementById('crosshair-size').value = data.chSize || 16;
-            document.getElementById('sens-slider').value = data.sens || 5;
-            document.getElementById('fire-pos').value = data.firePos || 'right';
-            document.getElementById('btn-size').value = data.btnSize || 58;
-            if (data.gyro !== undefined) document.getElementById('gyro-toggle').checked = data.gyro;
-            applySettings();
-            updateFOV(data.fov || 75);
-            updateCrosshairColor();
-            updateCrosshairSize(data.chSize || 16);
-            updateBtnSize(data.btnSize || 58);
-            updateSensLabel(data.sens || 5);
-            applyButtonLayout();
-            return data;
+            const d = JSON.parse(saved);
+            document.getElementById('gfx-quality').value = d.gfx || 'high';
+            document.getElementById('fov-slider').value = d.fov || 75;
+            document.getElementById('crosshair-color').value = d.chColor || '#00ffcc';
+            document.getElementById('crosshair-size').value = d.chSize || 16;
+            document.getElementById('sens-slider').value = d.sens || 5;
+            document.getElementById('fire-pos').value = d.firePos || 'right';
+            document.getElementById('btn-size').value = d.btnSize || 58;
+            if (d.gyro !== undefined) document.getElementById('gyro-toggle').checked = d.gyro;
+            return d;
         }
     } catch(e) {}
     return null;
 }
 
 function saveSettings() {
-    const data = {
+    const d = {
         gfx: document.getElementById('gfx-quality').value,
         fov: parseInt(document.getElementById('fov-slider').value),
         chColor: document.getElementById('crosshair-color').value,
@@ -439,104 +353,62 @@ function saveSettings() {
         btnSize: parseInt(document.getElementById('btn-size').value),
         gyro: document.getElementById('gyro-toggle').checked
     };
-    localStorage.setItem('fps_settings', JSON.stringify(data));
-    return data;
+    localStorage.setItem('fps_settings', JSON.stringify(d));
+    return d;
 }
 
-function saveAndCloseSettings() {
-    saveSettings();
-    resumeGame();
-}
+function saveAndCloseSettings() { saveSettings(); resumeGame(); }
 
-// ============================================================
-// 3. AYAR FONKSİYONLARI
-// ============================================================
+// ========== 4. AYAR FONKSİYONLARI ==========
 function updateFOV(val) {
     document.getElementById('fov-value').innerText = val;
-    if (isGameStarted && !isAiming) {
-        camera.fov = parseInt(val);
-        camera.updateProjectionMatrix();
-    }
+    if (isGameStarted && !isAiming) { camera.fov = parseInt(val); camera.updateProjectionMatrix(); }
 }
-
 function updateCrosshairColor() {
-    const color = document.getElementById('crosshair-color').value;
-    document.querySelector('#crosshair::before').style.background = color;
-    document.querySelector('#crosshair::after').style.background = color;
-    document.querySelector('#crosshair::before').style.boxShadow = `0 0 6px ${color}`;
-    document.querySelector('#crosshair::after').style.boxShadow = `0 0 6px ${color}`;
+    const c = document.getElementById('crosshair-color').value;
+    document.querySelector('#crosshair::before').style.background = c;
+    document.querySelector('#crosshair::after').style.background = c;
+    document.querySelector('#crosshair::before').style.boxShadow = `0 0 6px ${c}`;
+    document.querySelector('#crosshair::after').style.boxShadow = `0 0 6px ${c}`;
 }
-
 function updateCrosshairSize(val) {
     document.getElementById('ch-size-value').innerText = val;
-    const size = parseInt(val);
-    document.getElementById('crosshair').style.width = size + 'px';
-    document.getElementById('crosshair').style.height = size + 'px';
-    const half = size / 2;
-    document.querySelector('#crosshair::before').style.height = size + 'px';
-    document.querySelector('#crosshair::after').style.width = size + 'px';
+    const s = parseInt(val);
+    document.getElementById('crosshair').style.width = s + 'px';
+    document.getElementById('crosshair').style.height = s + 'px';
+    document.querySelector('#crosshair::before').style.height = s + 'px';
+    document.querySelector('#crosshair::after').style.width = s + 'px';
 }
-
-function updateSensLabel(val) {
+function updateSens(val) {
     document.getElementById('sens-value').innerText = val;
     settings.sens = parseInt(val) * 0.0007;
 }
-
 function updateBtnSize(val) {
     document.getElementById('btn-size-value').innerText = val;
-    const size = parseInt(val);
-    document.querySelectorAll('.btn-svg').forEach(b => {
-        b.style.width = size + 'px';
-        b.style.height = size + 'px';
-    });
-    document.querySelector('.btn-fire').style.height = (size * 2.17) + 'px';
+    const s = parseInt(val);
+    document.querySelectorAll('.btn-svg').forEach(b => { b.style.width = s + 'px'; b.style.height = s + 'px'; });
+    document.querySelector('.btn-fire').style.height = (s * 2.17) + 'px';
 }
-
 function applyButtonLayout() {
     const pos = document.getElementById('fire-pos').value;
-    const group = document.getElementById('btn-group');
-    if (pos === 'left') {
-        group.style.right = 'auto';
-        group.style.left = '20px';
-        group.style.gridTemplateColumns = 'repeat(3, 58px)';
-    } else if (pos === 'center') {
-        group.style.right = 'auto';
-        group.style.left = '50%';
-        group.style.transform = 'translateX(-50%)';
-        group.style.gridTemplateColumns = 'repeat(3, 58px)';
-    } else {
-        group.style.right = '20px';
-        group.style.left = 'auto';
-        group.style.transform = 'none';
-        group.style.gridTemplateColumns = 'repeat(3, 58px)';
-    }
+    const g = document.getElementById('btn-group');
+    if (pos === 'left') { g.style.right = 'auto'; g.style.left = '20px'; g.style.transform = 'none'; }
+    else if (pos === 'center') { g.style.right = 'auto'; g.style.left = '50%'; g.style.transform = 'translateX(-50%)'; }
+    else { g.style.right = '20px'; g.style.left = 'auto'; g.style.transform = 'none'; }
 }
-
 function applySettings() {
     const qual = document.getElementById('gfx-quality').value;
     renderer.shadowMap.enabled = (qual === 'high');
-    const sensVal = parseInt(document.getElementById('sens-slider').value);
-    settings.sens = sensVal * 0.0007;
-    const fovVal = parseInt(document.getElementById('fov-slider').value);
-    if (isGameStarted && !isAiming) {
-        camera.fov = fovVal;
-        camera.updateProjectionMatrix();
-    }
+    const sens = parseInt(document.getElementById('sens-slider').value);
+    settings.sens = sens * 0.0007;
     saveSettings();
 }
-
 function openSettings() {
-    if (isGameStarted && pState.hp > 0) {
-        pauseGame();
-    } else {
-        document.getElementById('main-menu').style.display = 'none';
-        document.getElementById('settings-menu').style.display = 'flex';
-    }
+    if (isGameStarted && pState.hp > 0) pauseGame();
+    else { document.getElementById('main-menu').style.display = 'none'; document.getElementById('settings-menu').style.display = 'flex'; }
 }
 
-// ============================================================
-// 4. THREE.JS SAHNE
-// ============================================================
+// ========== 5. THREE.JS SAHNE ==========
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a202c);
 scene.fog = new THREE.FogExp2(0x1a202c, 0.012);
@@ -560,7 +432,6 @@ sunLight.shadow.mapSize.width = 2048;
 sunLight.shadow.mapSize.height = 2048;
 scene.add(sunLight);
 
-// Zemin
 const floorMat = new THREE.MeshStandardMaterial({ color: 0x2d3436, roughness: 0.8, metalness: 0.2 });
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), floorMat);
 floor.rotation.x = -Math.PI / 2;
@@ -571,7 +442,6 @@ const grid = new THREE.GridHelper(300, 60, 0x00ffcc, 0x485460);
 grid.position.y = 0.01;
 scene.add(grid);
 
-// Binalar
 function createBuilding(x, z, w, h, d, color = 0x3d3d3d) {
     const group = new THREE.Group();
     const wallMat = new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.1 });
@@ -597,16 +467,13 @@ for(let i=0; i<30; i++) {
     }
 }
 
-// ============================================================
-// 5. OYUNCU
-// ============================================================
+// ========== 6. OYUNCU ==========
 const playerGroup = new THREE.Group();
 playerGroup.position.set(0, 1.7, 40);
-scene.add(playerGroup); playerGroup.add(camera);
+scene.add(playerGroup);
+playerGroup.add(camera);
 
-// ============================================================
-// 6. SİLAHLAR (Detaylı)
-// ============================================================
+// ========== 7. SİLAHLAR ==========
 const gunGroup = new THREE.Group();
 gunGroup.position.set(0.22, -0.22, -0.42);
 camera.add(gunGroup);
@@ -615,7 +482,6 @@ const matDark = new THREE.MeshStandardMaterial({color: 0x1e272e, roughness: 0.3,
 const matMetal = new THREE.MeshStandardMaterial({color: 0x485460, roughness: 0.2, metalness: 0.9});
 const matWood = new THREE.MeshStandardMaterial({color: 0x805b36, roughness: 0.6});
 
-// Tüfek
 const rifleMesh = new THREE.Group();
 const rBody = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.09, 0.45), matDark);
 const rBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.55), matMetal);
@@ -628,7 +494,6 @@ const rStock = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.2), matWood);
 rStock.position.set(0, -0.02, 0.28);
 rifleMesh.add(rBody, rBarrel, rMag, rSight, rStock);
 
-// Tabanca
 const pistolMesh = new THREE.Group();
 const pSlide = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.22), matMetal);
 pSlide.position.set(0, 0.03, -0.05);
@@ -639,7 +504,6 @@ pBarrel.rotation.x = Math.PI / 2; pBarrel.position.set(0, 0.03, -0.08);
 pistolMesh.add(pSlide, pGrip, pBarrel);
 pistolMesh.visible = false;
 
-// Bıçak
 const knifeMesh = new THREE.Group();
 const kBladeMat = new THREE.MeshStandardMaterial({color: 0xdcdde1, metalness: 0.95, roughness: 0.1});
 const kHandle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 0.16), matDark);
@@ -652,7 +516,6 @@ knifeMesh.visible = false;
 
 gunGroup.add(rifleMesh, pistolMesh, knifeMesh);
 
-// Muzzle Flash
 const muzzleFlash = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), 
     new THREE.MeshBasicMaterial({color: 0xffaa00, transparent: true, opacity: 0}));
 muzzleFlash.position.set(0, 0.02, -0.72);
@@ -660,96 +523,42 @@ const muzzleLight = new THREE.PointLight(0xffaa00, 0, 10);
 muzzleLight.position.set(0, 0.02, -0.72);
 gunGroup.add(muzzleFlash, muzzleLight);
 
-// ============================================================
-// 7. DÜŞMANLAR (İnsansı + Detaylı)
-// ============================================================
+// ========== 8. DÜŞMANLAR ==========
 let enemies = [];
 
-function createHumanoidEnemy() {
-    const group = new THREE.Group();
-    
-    // Gövde
-    const bodyMat = new THREE.MeshStandardMaterial({color: 0xeb4d4b, roughness: 0.5});
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.5), bodyMat);
-    body.position.y = 0.7;
-    body.castShadow = true;
-    body.userData = { type: 'body' };
-    
-    // Kafa
-    const headMat = new THREE.MeshStandardMaterial({color: 0xffd1b3, roughness: 0.3});
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 10), headMat);
-    head.position.y = 1.55;
-    head.castShadow = true;
-    head.userData = { type: 'head' };
-    
-    // Kollar
-    const armMat = new THREE.MeshStandardMaterial({color: 0xffd1b3, roughness: 0.4});
-    const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.5), armMat);
-    lArm.position.set(-0.45, 1.1, 0);
-    lArm.rotation.z = 0.2;
-    const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.5), armMat);
-    rArm.position.set(0.45, 1.1, 0);
-    rArm.rotation.z = -0.2;
-    
-    // Bacaklar
-    const legMat = new THREE.MeshStandardMaterial({color: 0x2c3e50, roughness: 0.6});
-    const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.6), legMat);
-    lLeg.position.set(-0.18, 0.2, 0);
-    const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.6), legMat);
-    rLeg.position.set(0.18, 0.2, 0);
-    
-    // Düşman silahı (basit)
-    const eGun = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.35), matDark);
-    eGun.position.set(0.4, 0.9, -0.2);
-    eGun.rotation.x = 0.2;
-    
-    group.add(body, head, lArm, rArm, lLeg, rLeg, eGun);
-    
-    // Animasyon için referanslar
-    group.userData = {
-        body: body, head: head, lArm: lArm, rArm: rArm, lLeg: lLeg, rLeg: rLeg,
-        hp: 100, lastShoot: 0, walkPhase: 0
-    };
-    
-    return group;
-}
-
 function spawnEnemy() {
-    const enemyGroup = createHumanoidEnemy();
-    const mod = modSettings[currentMod];
-    enemyGroup.userData.hp = mod.enemyHP;
+    const enemyGroup = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({color: 0xeb4d4b, roughness: 0.4});
+    const headMat = new THREE.MeshStandardMaterial({color: 0xff7979, roughness: 0.3});
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.6), bodyMat);
+    body.position.y = 0.7; body.castShadow = true;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 10), headMat);
+    head.position.y = 1.7; head.castShadow = true;
+    const eGun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.4), matDark);
+    eGun.position.set(0.35, 0.8, -0.3);
+    enemyGroup.add(body, head, eGun);
+    enemyGroup.userData = { head, body, hp: 100, lastShoot: 0 };
     
-    let angle = Math.random() * Math.PI * 2;
-    let dist = 25 + Math.random() * 45;
-    let x = playerGroup.position.x + Math.cos(angle) * dist;
-    let z = playerGroup.position.z + Math.sin(angle) * dist;
-    enemyGroup.position.set(x, 0, z);
-    
-    // Rastgele renk
-    const colors = [0xeb4d4b, 0x6c5ce7, 0xfdcb6e, 0x00b894, 0xe17055];
-    enemyGroup.userData.body.material.color.setHex(colors[Math.floor(Math.random() * colors.length)]);
-    
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 25 + Math.random() * 45;
+    enemyGroup.position.set(
+        playerGroup.position.x + Math.cos(angle) * dist,
+        0,
+        playerGroup.position.z + Math.sin(angle) * dist
+    );
     scene.add(enemyGroup);
     enemies.push(enemyGroup);
 }
 
-function spawnEnemies(count) {
-    for(let i=0; i<count; i++) spawnEnemy();
-}
-
-// Başlangıç düşmanları
+function spawnEnemies(count) { for(let i=0; i<count; i++) spawnEnemy(); }
 spawnEnemies(6);
 
-// ============================================================
-// 8. OYUN DURUMU
-// ============================================================
-let isGameStarted = false;
-let isPaused = false;
+// ========== 9. OYUN DURUMU ==========
+let isGameStarted = false, isPaused = false;
 let keys = {};
 let pState = { hp: 100, kills: 0, score: 0 };
 let velocityY = 0, isGrounded = true, isCrouching = false, isAiming = false;
-let currentSlot = 1;
-let isSwitching = false, switchAnimProgress = 0;
+let currentSlot = 1, isSwitching = false, switchAnimProgress = 0;
 let moveInput = { x: 0, y: 0 }, yaw = 0, pitch = 0;
 let animTimer = 0;
 let settings = { sens: 0.0035, gyro: false };
@@ -760,21 +569,15 @@ let weaponAmmo = {
     3: { cur: '∞', res: '∞' } 
 };
 
-// ============================================================
-// 9. ANA MENÜ / OYUN BAŞLATMA
-// ============================================================
+// ========== 10. OYUN BAŞLAT ==========
 function startGame() {
     document.getElementById('main-menu').style.display = 'none';
     document.getElementById('mod-menu').style.display = 'none';
     document.getElementById('settings-menu').style.display = 'none';
-    
     isGameStarted = true;
-    pState.hp = 100;
-    pState.kills = 0;
-    pState.score = 0;
+    pState.hp = 100; pState.kills = 0; pState.score = 0;
     updateHUD();
     
-    // Kayıtlı modu yükle
     const savedMod = localStorage.getItem('fps_mod');
     if (savedMod && modSettings[savedMod]) {
         currentMod = savedMod;
@@ -785,12 +588,8 @@ function startGame() {
         document.getElementById('current-mod-label').innerText = modSettings[currentMod].label;
     }
     
-    if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-    }
-    if (!isMobile) {
-        document.body.requestPointerLock();
-    }
+    if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+    if (!isMobile) document.body.requestPointerLock();
     
     if (isMobile) {
         document.getElementById('btn-pause-ui').style.display = 'flex';
@@ -798,12 +597,16 @@ function startGame() {
         document.getElementById('gyro-option').style.display = 'flex';
     }
     
-    // Ayarları uygula
-    const savedSettings = loadSettings();
-    if (savedSettings) {
-        document.getElementById('fov-slider').value = savedSettings.fov || 75;
-        camera.fov = savedSettings.fov || 75;
+    const loaded = loadSettings();
+    if (loaded) {
+        document.getElementById('fov-slider').value = loaded.fov || 75;
+        camera.fov = loaded.fov || 75;
         camera.updateProjectionMatrix();
+        applyButtonLayout();
+        updateCrosshairColor();
+        updateCrosshairSize(loaded.chSize || 16);
+        updateBtnSize(loaded.btnSize || 58);
+        updateSens(loaded.sens || 5);
     }
 }
 
@@ -812,26 +615,20 @@ function goToMainMenu() {
     document.getElementById('main-menu').style.display = 'flex';
     isGameStarted = false;
     if (document.exitPointerLock) document.exitPointerLock();
-    // Düşmanları temizle
     enemies.forEach(e => scene.remove(e));
     enemies = [];
     spawnEnemies(6);
     playerGroup.position.set(0, 1.7, 40);
-    pState.hp = 100;
-    pState.kills = 0;
-    pState.score = 0;
+    pState.hp = 100; pState.kills = 0; pState.score = 0;
     updateHUD();
 }
 
-// ============================================================
-// 10. PAUSE / RESUME
-// ============================================================
+// ========== 11. PAUSE ==========
 function pauseGame() {
     isPaused = true;
     document.getElementById('settings-menu').style.display = 'flex';
     if (document.exitPointerLock) document.exitPointerLock();
 }
-
 function resumeGame() {
     isPaused = false;
     document.getElementById('settings-menu').style.display = 'none';
@@ -839,34 +636,17 @@ function resumeGame() {
     if (!isMobile && isGameStarted) document.body.requestPointerLock();
 }
 
-if (isMobile) {
-    document.getElementById('btn-pause-ui').addEventListener('click', (e) => {
-        e.stopPropagation(); 
-        if (isGameStarted && pState.hp > 0) pauseGame();
-    });
-}
-
-// ============================================================
-// 11. PC KONTROLLERİ
-// ============================================================
+// ========== 12. PC KONTROLLER ==========
 window.addEventListener('keydown', e => {
     if(!isGameStarted || pState.hp <= 0) return;
     keys[e.code] = true;
-    
     if (e.code === 'KeyR') reloadGun();
-    if (e.code === 'KeyP' || e.code === 'Escape') {
-        if(isPaused) resumeGame(); else pauseGame();
-    }
+    if (e.code === 'KeyP' || e.code === 'Escape') { if(isPaused) resumeGame(); else pauseGame(); }
     if (e.code === 'Digit1') switchWeapon(1);
     if (e.code === 'Digit2') switchWeapon(2);
     if (e.code === 'Digit3') switchWeapon(3);
     if (e.code === 'Space') jumpPlayer();
     if (e.code === 'KeyC') crouchPlayer();
-    if (e.code === 'KeyQ') { 
-        // Hızlı silah değiştirme
-        let next = currentSlot === 3 ? 1 : currentSlot + 1;
-        switchWeapon(next);
-    }
 });
 window.addEventListener('keyup', e => keys[e.code] = false);
 
@@ -886,9 +666,7 @@ window.addEventListener('mousedown', e => {
 });
 window.addEventListener('contextmenu', e => e.preventDefault());
 
-// ============================================================
-// 12. MOBİL KONTROLLER
-// ============================================================
+// ========== 13. MOBIL KONTROLLER ==========
 let moveTouchId = null, lookTouchId = null;
 let joyCenter = { x: 0, y: 0 }, lastLookPos = { x: 0, y: 0 };
 
@@ -939,34 +717,28 @@ if (isMobile) {
         }
     }, {passive: false});
 
-    const resetTouch = (id) => {
-        if (id === moveTouchId) { moveTouchId = null; moveInput = { x: 0, y: 0 }; joyBase.style.display = 'none'; }
-        if (id === lookTouchId) lookTouchId = null;
-    };
-    window.addEventListener('touchend', e => { for (let t of e.changedTouches) resetTouch(t.identifier); });
-    window.addEventListener('touchcancel', e => { for (let t of e.touches) resetTouch(t.identifier); });
-
-    document.getElementById('btn-fire').addEventListener('touchstart', e => { e.preventDefault(); if(isGameStarted && pState.hp > 0) shootGun(); });
-    document.getElementById('btn-aim').addEventListener('touchstart', e => { e.preventDefault(); toggleAim(); });
-    document.getElementById('btn-reload').addEventListener('touchstart', e => { e.preventDefault(); reloadGun(); });
-    document.getElementById('btn-jump').addEventListener('touchstart', e => { e.preventDefault(); jumpPlayer(); });
-    document.getElementById('btn-crouch').addEventListener('touchstart', e => { e.preventDefault(); crouchPlayer(); });
+    window.addEventListener('touchend', e => {
+        for (let t of e.changedTouches) {
+            if (t.identifier === moveTouchId) { moveTouchId = null; moveInput = { x: 0, y: 0 }; joyBase.style.display = 'none'; }
+            if (t.identifier === lookTouchId) lookTouchId = null;
+        }
+    });
+    window.addEventListener('touchcancel', e => {
+        for (let t of e.touches) {
+            if (t.identifier === moveTouchId) { moveTouchId = null; moveInput = { x: 0, y: 0 }; joyBase.style.display = 'none'; }
+            if (t.identifier === lookTouchId) lookTouchId = null;
+        }
+    });
 }
 
-// ============================================================
-// 13. JİROSKOP
-// ============================================================
+// ========== 14. JİROSKOP ==========
 function toggleGyro() {
     if(!isMobile) return;
     settings.gyro = document.getElementById('gyro-toggle').checked;
-    if (settings.gyro && window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', handleGyro);
-    } else {
-        window.removeEventListener('deviceorientation', handleGyro);
-    }
+    if (settings.gyro && window.DeviceOrientationEvent) window.addEventListener('deviceorientation', handleGyro);
+    else window.removeEventListener('deviceorientation', handleGyro);
     saveSettings();
 }
-
 function handleGyro(e) {
     if (!isPaused && isGameStarted && settings.gyro) {
         yaw -= e.gamma * 0.001;
@@ -975,33 +747,26 @@ function handleGyro(e) {
     }
 }
 
-// ============================================================
-// 14. OYUN MEKANİKLERİ
-// ============================================================
+// ========== 15. OYUN MEKANİKLERİ ==========
 function switchWeapon(slot) {
     if(currentSlot === slot || isPaused || isSwitching || pState.hp <= 0) return;
-    isSwitching = true;
-    switchAnimProgress = 0;
-
-    let switchInterval = setInterval(() => {
+    isSwitching = true; switchAnimProgress = 0;
+    const si = setInterval(() => {
         switchAnimProgress += 0.15;
         gunGroup.position.y = -0.22 - Math.sin(switchAnimProgress * Math.PI) * 0.35;
-
         if (switchAnimProgress >= 0.5 && currentSlot !== slot) {
             currentSlot = slot;
             rifleMesh.visible = (slot === 1);
             pistolMesh.visible = (slot === 2);
             knifeMesh.visible = (slot === 3);
-
             if(isMobile) {
                 document.querySelectorAll('.slot-box').forEach(el => el.classList.remove('active'));
                 document.getElementById(`slot-${slot}`).classList.add('active');
             }
             updateHUD();
         }
-
         if (switchAnimProgress >= 1.0) {
-            clearInterval(switchInterval);
+            clearInterval(si);
             gunGroup.position.y = -0.22;
             isSwitching = false;
         }
@@ -1010,27 +775,23 @@ function switchWeapon(slot) {
 
 function shootGun() {
     if(isSwitching || isPaused || pState.hp <= 0) return;
-    let wData = weaponAmmo[currentSlot];
+    const wData = weaponAmmo[currentSlot];
     if (currentSlot !== 3 && wData.cur <= 0) { reloadGun(); return; }
-
     if (currentSlot !== 3) wData.cur--;
     updateHUD();
 
-    // Recoil
     gunGroup.position.z = -0.32;
     pitch += 0.015;
     if(currentSlot !== 3) {
         muzzleFlash.material.opacity = 1;
         muzzleLight.intensity = 3;
     }
-
     setTimeout(() => {
         gunGroup.position.z = -0.42;
         muzzleFlash.material.opacity = 0;
         muzzleLight.intensity = 0;
     }, 50);
 
-    // Tracer
     const tracerMat = new THREE.LineBasicMaterial({ color: 0xffdd59 });
     const tracerGeo = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(0.2, -0.1, -0.5).applyMatrix4(camera.matrixWorld),
@@ -1040,7 +801,6 @@ function shootGun() {
     scene.add(tracer);
     setTimeout(() => scene.remove(tracer), 40);
 
-    // Hit detection
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
 
@@ -1048,36 +808,27 @@ function shootGun() {
         const head = enemyGroup.userData.head;
         const body = enemyGroup.userData.body;
         if (!head || !body) return;
-        
         const intersects = raycaster.intersectObjects([head, body]);
         if(intersects.length > 0) {
-            let hitHead = intersects[0].object === head;
-            
+            const hitHead = intersects[0].object === head;
             let dmg = 35;
             if (currentSlot === 1) dmg = hitHead ? 100 : 35;
             if (currentSlot === 2) dmg = hitHead ? 70 : 25;
             if (currentSlot === 3) dmg = 65;
-
             enemyGroup.userData.hp -= dmg;
             pState.score += hitHead ? 150 : 50;
-
             if(enemyGroup.userData.hp <= 0) {
                 scene.remove(enemyGroup);
                 enemies.splice(index, 1);
                 pState.kills++;
                 updateHUD();
-                
-                // Dalga modu kontrolü
                 if (currentMod === 'wave') {
                     enemiesSpawnedThisWave++;
                     if (enemiesSpawnedThisWave >= maxEnemiesPerWave) {
                         waveLevel++;
                         maxEnemiesPerWave = Math.min(5 + waveLevel * 2, 25);
                         enemiesSpawnedThisWave = 0;
-                        // Yeni dalga
-                        setTimeout(() => {
-                            spawnEnemies(Math.min(3 + waveLevel, 10));
-                        }, 1000);
+                        setTimeout(() => spawnEnemies(Math.min(3 + waveLevel, 10)), 1000);
                     } else {
                         setTimeout(spawnEnemy, 1500);
                     }
@@ -1092,28 +843,21 @@ function shootGun() {
 function toggleAim() {
     if (currentSlot === 3 || pState.hp <= 0) return;
     isAiming = !isAiming;
-    const fovVal = parseInt(document.getElementById('fov-slider').value) || 75;
-    camera.fov = isAiming ? 45 : fovVal;
+    const fov = parseInt(document.getElementById('fov-slider').value) || 75;
+    camera.fov = isAiming ? 45 : fov;
     gunGroup.position.set(isAiming ? 0 : 0.22, isAiming ? -0.14 : -0.22, isAiming ? -0.25 : -0.42);
     camera.updateProjectionMatrix();
 }
 
 function reloadGun() {
     if (currentSlot === 3 || isSwitching || pState.hp <= 0) return;
-    let wData = weaponAmmo[currentSlot];
-    let maxAmmo = (currentSlot === 1) ? 30 : 12;
-
+    const wData = weaponAmmo[currentSlot];
+    const maxAmmo = (currentSlot === 1) ? 30 : 12;
     if (wData.cur < maxAmmo && wData.res > 0) {
-        let reloadAmount = Math.min(maxAmmo - wData.cur, wData.res);
-        wData.res -= reloadAmount; wData.cur += reloadAmount;
-        
-        gunGroup.rotation.z = -0.6;
-        gunGroup.position.y = -0.35;
-        setTimeout(() => {
-            gunGroup.rotation.z = 0;
-            gunGroup.position.y = -0.22;
-            updateHUD();
-        }, 400);
+        const amount = Math.min(maxAmmo - wData.cur, wData.res);
+        wData.res -= amount; wData.cur += amount;
+        gunGroup.rotation.z = -0.6; gunGroup.position.y = -0.35;
+        setTimeout(() => { gunGroup.rotation.z = 0; gunGroup.position.y = -0.22; updateHUD(); }, 400);
     }
 }
 
@@ -1124,29 +868,23 @@ function crouchPlayer() {
     playerGroup.position.y = isCrouching ? 1.0 : 1.7; 
 }
 
-// ============================================================
-// 15. HUD GÜNCELLEME
-// ============================================================
 function updateHUD() {
     document.getElementById('kills').innerText = pState.kills;
     document.getElementById('score').innerText = pState.score;
-    const wData = weaponAmmo[currentSlot];
-    document.getElementById('ammo-cur').innerText = wData.cur;
-    document.getElementById('ammo-reserve').innerText = wData.res;
+    const w = weaponAmmo[currentSlot];
+    document.getElementById('ammo-cur').innerText = w.cur;
+    document.getElementById('ammo-reserve').innerText = w.res;
     document.getElementById('hp').innerText = Math.max(0, Math.round(pState.hp));
     document.getElementById('hp-fill').style.width = Math.max(0, pState.hp) + '%';
     document.getElementById('hud-mod').innerText = modSettings[currentMod].label;
 }
 
-// ============================================================
-// 16. ANA OYUN DÖNGÜSÜ
-// ============================================================
+// ========== 16. ANA DÖNGÜ ==========
 const clock = new THREE.Clock();
-let enemySpawnTimer = 0;
 
 function animate() {
     requestAnimationFrame(animate);
-    let dt = clock.getDelta();
+    const dt = clock.getDelta();
 
     if(!isGameStarted || isPaused || pState.hp <= 0) {
         if (pState.hp <= 0 && isGameStarted) {
@@ -1158,15 +896,13 @@ function animate() {
         return;
     }
 
-    // Oyuncu rotasyonu
     playerGroup.rotation.y = yaw;
     camera.rotation.x = pitch;
 
-    // Zıplama fizik
     if (!isGrounded) {
         playerGroup.position.y += velocityY * dt;
         velocityY -= 18 * dt;
-        let groundY = isCrouching ? 1.0 : 1.7;
+        const groundY = isCrouching ? 1.0 : 1.7;
         if (playerGroup.position.y <= groundY) {
             playerGroup.position.y = groundY;
             velocityY = 0;
@@ -1174,7 +910,6 @@ function animate() {
         }
     }
 
-    // PC hareket
     if (!isMobile) {
         moveInput = { x: 0, y: 0 };
         if (keys['KeyW']) moveInput.y = -1;
@@ -1183,63 +918,42 @@ function animate() {
         if (keys['KeyD']) moveInput.x = 1;
     }
 
-    // Hareket
-    let isMoving = (moveInput.x !== 0 || moveInput.y !== 0);
+    const isMoving = (moveInput.x !== 0 || moveInput.y !== 0);
     if (isMoving) {
         const mod = modSettings[currentMod];
-        let baseSpeed = (currentSlot === 3) ? mod.playerSpeed * 1.35 : mod.playerSpeed;
-        let speed = isCrouching ? 3.0 : baseSpeed;
-
-        let forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
-        let side = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
-        let moveDir = forward.multiplyScalar(-moveInput.y).add(side.multiplyScalar(moveInput.x));
+        const baseSpeed = (currentSlot === 3) ? mod.enemySpeed * 1.3 : mod.enemySpeed;
+        const speed = isCrouching ? 3.0 : baseSpeed;
+        const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+        const side = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+        const moveDir = forward.multiplyScalar(-moveInput.y).add(side.multiplyScalar(moveInput.x));
         playerGroup.position.add(moveDir.multiplyScalar(speed * dt));
     }
 
-    // Silah sallantısı
-    animTimer += dt * (isMoving ? (currentSlot === 3 ? 14 : 10) : 2.5);
+    animTimer += dt * (isMoving ? 10 : 2.5);
     if (!isAiming && !isSwitching) {
-        let swayX = Math.cos(animTimer * 0.5) * (isMoving ? 0.015 : 0.003);
-        let swayY = Math.sin(animTimer) * (isMoving ? 0.015 : 0.003);
-        gunGroup.position.x = (isAiming ? 0 : 0.22) + swayX;
-        gunGroup.position.y = -0.22 + swayY;
+        const sx = Math.cos(animTimer * 0.5) * (isMoving ? 0.015 : 0.003);
+        const sy = Math.sin(animTimer) * (isMoving ? 0.015 : 0.003);
+        gunGroup.position.x = (isAiming ? 0 : 0.22) + sx;
+        gunGroup.position.y = -0.22 + sy;
     }
 
-    // Düşman güncelleme
     const mod = modSettings[currentMod];
-    enemies.forEach((enemyGroup, index) => {
-        if (!enemyGroup) return;
-        
-        // Düşman yürüme animasyonu
-        const walkPhase = enemyGroup.userData.walkPhase || 0;
-        enemyGroup.userData.walkPhase = (walkPhase + dt * 3) % (Math.PI * 2);
-        const legSwing = Math.sin(walkPhase) * 0.3;
-        if (enemyGroup.userData.lLeg) {
-            enemyGroup.userData.lLeg.rotation.x = legSwing;
-            enemyGroup.userData.rLeg.rotation.x = -legSwing;
-        }
-        
-        // Düşman takip
-        const targetPos = playerGroup.position;
-        const enemyPos = enemyGroup.position;
-        const dx = targetPos.x - enemyPos.x;
-        const dz = targetPos.z - enemyPos.z;
+    enemies.forEach((enemyGroup) => {
+        const target = playerGroup.position;
+        const pos = enemyGroup.position;
+        const dx = target.x - pos.x;
+        const dz = target.z - pos.z;
         const dist = Math.hypot(dx, dz);
         
-        if (dist > 1.5 && dist < 80) {
-            const speed = mod.enemySpeed * (currentMod === 'wave' ? 1 + (waveLevel * 0.05) : 1);
-            const moveX = (dx / dist) * speed * dt;
-            const moveZ = (dz / dist) * speed * dt;
-            enemyPos.x += moveX;
-            enemyPos.z += moveZ;
-            
-            // Düşmanın oyuncuya bakması
-            enemyGroup.lookAt(targetPos.x, 0, targetPos.z);
+        if (dist > 2 && dist < 80) {
+            const speed = mod.enemySpeed * (currentMod === 'wave' ? 1 + (waveLevel * 0.04) : 1);
+            pos.x += (dx / dist) * speed * dt;
+            pos.z += (dz / dist) * speed * dt;
+            enemyGroup.lookAt(target.x, 0, target.z);
         }
         
-        // Düşman saldırısı
-        if (dist < 12) {
-            let now = clock.getElapsedTime();
+        if (dist < 14) {
+            const now = clock.getElapsedTime();
             if (now - enemyGroup.userData.lastShoot > 1.5) {
                 enemyGroup.userData.lastShoot = now;
                 pState.hp -= mod.enemyDamage * (currentMod === 'hard' ? 1.3 : 1);
@@ -1258,30 +972,24 @@ function animate() {
 
 animate();
 
-// ============================================================
-// 17. PENCERE BOYUTU
-// ============================================================
+// ========== 17. PENCERE BOYUTU ==========
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ============================================================
-// 18. BAŞLANGIÇ AYARLARI YÜKLE
-// ============================================================
-const loadedSettings = loadSettings();
-if (loadedSettings) {
-    if (loadedSettings.fov) camera.fov = loadedSettings.fov;
-    camera.updateProjectionMatrix();
+// ========== 18. BAŞLANGIÇ ==========
+const loaded = loadSettings();
+if (loaded) {
+    if (loaded.fov) { camera.fov = loaded.fov; camera.updateProjectionMatrix(); }
     updateCrosshairColor();
-    updateCrosshairSize(loadedSettings.chSize || 16);
-    updateBtnSize(loadedSettings.btnSize || 58);
-    updateSensLabel(loadedSettings.sens || 5);
+    updateCrosshairSize(loaded.chSize || 16);
+    updateBtnSize(loaded.btnSize || 58);
+    updateSens(loaded.sens || 5);
     applyButtonLayout();
 }
 
-// Kayıtlı modu yükle
 const savedMod = localStorage.getItem('fps_mod');
 if (savedMod && modSettings[savedMod]) {
     currentMod = savedMod;
@@ -1292,7 +1000,7 @@ if (savedMod && modSettings[savedMod]) {
     document.getElementById('current-mod-label').innerText = modSettings[currentMod].label;
 }
 
-console.log('🎮 Tactical FPS Pro yüklendi! | Mod:', currentMod, '| Mobil:', isMobile);
+console.log('🎮 Tactical FPS Pro | Mod:', currentMod, '| Mobil:', isMobile);
 </script>
 </body>
         </html>
